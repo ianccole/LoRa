@@ -1,0 +1,25 @@
+{
+	"folders": [
+		{
+			"name": "blink-serial",
+			"path": "C:\\work\\blink\\blink-serial"
+		},
+		{
+			"name": "lora-blink-uniqueid",
+			"path": "lora-blink-uniqueid"
+		},
+		{
+			"name": "lora-i2c-scanner",
+			"path": "lora-i2c-scanner"
+		},
+		{
+			"name": "lora-linktest-rx",
+			"path": "lora-linktest-rx"
+		},
+		{
+			"name": "lora-linktest-tx",
+			"path": "lora-linktest-tx"
+		}
+	],
+    "settings": {}
+}
