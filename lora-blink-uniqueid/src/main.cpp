@@ -9,12 +9,12 @@
 #include <Arduino.h>
 #include <SPIMemory.h>
 
-#ifdef LED_BUILTIN
-  #undef LED_BUILTIN
-  #define LED_BUILTIN 4
-#endif
+// #ifdef LED_BUILTIN
+//   #undef LED_BUILTIN
+//   #define LED_BUILTIN 4
+// #endif
 
-SPIFlash flash(8);
+SPIFlash flash(FLASH_CS);
 
 void printUniqueID(void) {
   long long _uniqueID = flash.getUniqueID();
