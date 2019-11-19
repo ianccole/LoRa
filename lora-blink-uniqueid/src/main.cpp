@@ -15,6 +15,7 @@
 
 // SPIFlash flash(FLASH_SS, 0xEF30);
 SPIFlash flash(FLASH_SS);
+uint8_t uniqueId = 0;
 
 void setup()
 {
@@ -30,20 +31,16 @@ void setup()
   }
 
   flash.readUniqueId(); 
+
   for (uint8_t i=0;i<8;i++) 
   { 
+    
     Serial.print(flash.UNIQUEID[i], HEX); 
     Serial.print(' '); 
+    uniqueId += flash.UNIQUEID[i];
   }
-
-// uint8_t SPIFlash::getCSumUniqueID(void)
-// {
-//   uint8_t sum = 0;
-//    for (uint8_t i = 0; i < 8; i++) {
-//      sum += _uniqueID[i];
-//    }
-//   return sum;
-// }
+  Serial.println("\nUnique Id:");
+  Serial.println(uniqueId, HEX); 
 
   // initialize LED digital pin as an output.
   pinMode(LED_BUILTIN, OUTPUT);
