@@ -14,7 +14,7 @@
 // #endif
 
 // SPIFlash flash(FLASH_SS, 0xEF30);
-SPIFlash flash(FLASH_SS);
+SPIFlash flash(SS_FLASHMEM);
 uint8_t uniqueId = 0;
 
 void setup()
@@ -30,6 +30,9 @@ void setup()
     Serial.println("Init FAIL!");
   }
 
+  Serial.print("DeviceID: ");
+  Serial.println(flash.readDeviceId(), HEX);
+
   flash.readUniqueId(); 
 
   for (uint8_t i=0;i<8;i++) 
@@ -39,7 +42,7 @@ void setup()
     Serial.print(' '); 
     uniqueId += flash.UNIQUEID[i];
   }
-  Serial.println("\nUnique Id:");
+  Serial.print("\nUnique Id: ");
   Serial.println(uniqueId, HEX); 
 
   // initialize LED digital pin as an output.
@@ -50,7 +53,7 @@ void loop()
 {
   char incomingByte;
   static int delayms = 100;
-  static int delaymsoff = 1000;
+  static int delaymsoff = 1000/2;
 
   // turn the LED on (HIGH is the voltage level)
   digitalWrite(LED_BUILTIN, HIGH);
