@@ -1,0 +1,16 @@
+TTGO USB0
+
+DeviceID: EF4016
+DE 68 74 F3 5B 62 90 29 
+unique Id: 23
+
+moteino USB1
+
+DeviceID: EF3013
+D7 68 44 86 A3 55 65 24 
+Unique Id: 8A
+
+
+moteino USB2
+
+
