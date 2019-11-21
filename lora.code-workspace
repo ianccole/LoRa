@@ -22,6 +22,9 @@
         },
         {
             "path": "C:\\work\\LoRa-dev\\lora-mesh"
+        },
+        {
+            "path": "lora-module-test"
         }
     ],
     "settings": {}
