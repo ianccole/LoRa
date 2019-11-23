@@ -12,15 +12,17 @@
 #include <RHMesh.h>
 #include <RH_RF95.h>
 #define RH_HAVE_SERIAL
-#define N_NODES 3
 #define FREQMHZ 434.4
 #define POWER 0
 #define CAD_TIMEOUT 500
 
+uint8_t nodes[] = {0x23, 0x8a, 0xe3, 0x52, 0xfe};
+
+#define N_NODES (sizeof(nodes)/sizeof(nodes[0]))
+
 uint8_t nodeId = 0;
 uint8_t routes[N_NODES]; // full routing table for mesh
 int16_t rssi[N_NODES]; // signal strength info
-uint8_t nodes[N_NODES] = {0x23, 0x8a, 0xe3};
 // Singleton instance of the radio driver
 RH_RF95 rf95;
 
@@ -53,6 +55,10 @@ void setup()
     Serial.println("Init FAIL!");
   }
 
+#ifdef LED_BUILTIN
+  pinMode(LED_BUILTIN, OUTPUT);
+#endif
+
   Serial.print("DeviceID: ");
   Serial.println(flash.readDeviceId(), HEX);
 
@@ -64,6 +70,10 @@ void setup()
     Serial.print(flash.UNIQUEID[i], HEX); 
     Serial.print(' '); 
     nodeId += flash.UNIQUEID[i];
+  }
+  if(nodeId == 0xff)
+  {
+      nodeId -= 1;
   }
   Serial.print("\nnodeId Id: ");
   Serial.println(nodeId, HEX); 
@@ -168,6 +178,27 @@ void printNodeInfo(uint8_t node, char *s) {
   Serial.println(F("}"));
 }
 
+void setRssiNextHop(uint8_t node, int16_t rssi_val)
+{
+    for(uint8_t n=0; n < N_NODES; n++)
+    {
+        if(nodes[n] == node)
+        {
+            rssi[n] = rssi_val;
+            return;
+        }
+    }
+}
+
+void blinkLed()
+{
+#ifdef LED_BUILTIN
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(100);
+  digitalWrite(LED_BUILTIN, LOW);
+#endif
+}
+
 void loop() 
 {
   for(uint8_t n=0; n<N_NODES; n++) {
@@ -196,10 +227,11 @@ void loop()
       // Serial.println(route->next_hop);
       // Serial.println(node);
       if (route->next_hop != 0) {
-        rssi[n] = rf95.lastRssi();
+        setRssiNextHop(route->next_hop, rf95.lastRssi());
+        rssi[route->next_hop-1] = rf95.lastRssi();
       }
     }
-    if (nodeId == nodes[0]) printNodeInfo(nodeId, buf); // debugging
+    // if (nodeId == nodes[0]) printNodeInfo(nodeId, buf); // debugging
 
     // listen for incoming messages. Wait a random amount of time before we transmit
     // again to the next node
@@ -214,11 +246,13 @@ void loop()
         Serial.print(F("->"));
         Serial.print(F(" :"));
         Serial.println(buf);
-        if (nodeId == nodes[0]) printNodeInfo(from, buf); // debugging
+        // if (nodeId == nodes[0]) printNodeInfo(from, buf); // debugging
         // we received data from node 'from', but it may have actually come from an intermediate node
         RHRouter::RoutingTableEntry *route = manager->getRouteTo(from);
         if (route->next_hop != 0) {
-          rssi[route->next_hop-1] = rf95.lastRssi();
+          setRssiNextHop(route->next_hop, rf95.lastRssi());
+        //   rssi[route->next_hop-1] = rf95.lastRssi();
+        blinkLed();
         }
       }
     }
