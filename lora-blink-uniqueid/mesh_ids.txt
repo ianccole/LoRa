@@ -13,4 +13,7 @@ Unique Id: 8A
 
 moteino USB2
 
+DeviceID: EF3013
+D7 68 44 86 A3 4A C9 24 
+Unique Id: E3
 

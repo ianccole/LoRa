@@ -21,10 +21,13 @@
             "path": "lora-linktest-tx"
         },
         {
-            "path": "C:\\work\\LoRa-dev\\lora-mesh"
+            "path": "lora-module-test"
         },
         {
-            "path": "lora-module-test"
+            "path": "lora-mesh-test"
+        },
+        {
+            "path": "/home/pi/work/lora-mesh"
         }
     ],
     "settings": {}
