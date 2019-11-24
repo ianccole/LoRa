@@ -28,6 +28,9 @@
         },
         {
             "path": "/home/pi/work/lora-mesh"
+        },
+        {
+            "path": "."
         }
     ],
     "settings": {}
