@@ -13,10 +13,7 @@ class mesh
     static RH_RF95 rf95;
     static RHMesh *manager;
     static char buf[RH_MESH_MAX_MESSAGE_LEN];
-    // SPIFlash flash(FLASH_SS, 0xEF30);
     static SPIFlash &flash;
-    // static uint8_t nodes[] = {0x23, 0x8a, 0xe3, 0x52, 0xfe};
-    // #define N_NODES (sizeof(nodes)/sizeof(nodes[0]))
 
 public:
     void setup()
@@ -91,8 +88,8 @@ public:
 
         for (uint8_t n = 1; n <= N_NODES; n++)
         {
-            routes[n - 1] = 0;
-            rssi[n - 1] = 0;
+            this->routes[n - 1] = 0;
+            this->rssi[n - 1] = 0;
         }
 
         Serial.print(F("mem = "));
@@ -101,8 +98,8 @@ public:
 
 private:
     uint8_t nodeId = 0;
-    uint8_t routes[N_NODES]; // full routing table for mesh
-    int16_t rssi[N_NODES];   // signal strength info
+    uint8_t routes[N_NODES] = {}; // full routing table for mesh
+    int16_t rssi[N_NODES]   = {};   // signal strength info
 
     int freeMem()
     {
@@ -110,6 +107,29 @@ private:
         int v;
         return (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
     };
+
+    void updateRoutingTable()
+{
+  for (uint8_t n = 0; n < N_NODES; n++)
+  {
+    uint8_t node = nodes[n];
+    RHRouter::RoutingTableEntry *route = manager->getRouteTo(node);
+    if (node == nodeId)
+    {
+      routes[n] = 255; // self
+    }
+    else
+    {
+      routes[n] = route->next_hop;
+      if (routes[n] == 0)
+      {
+        // if we have no route to the node, reset the received signal strength
+        rssi[n] = 0;
+      }
+    }
+  }
+}
+
 };
 
 #endif
