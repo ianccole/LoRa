@@ -13,12 +13,14 @@
 #include <RH_RF95.h>
 #define RH_HAVE_SERIAL
 #define FREQMHZ 434.4
-#define POWER 0
+#define POWER 23
 #define CAD_TIMEOUT 500
 
 uint8_t nodes[] = {0x23, 0x8a, 0xe3, 0x52, 0xfe};
 
 #define N_NODES (sizeof(nodes)/sizeof(nodes[0]))
+
+#include <mesh.h>
 
 uint8_t nodeId = 0;
 uint8_t routes[N_NODES]; // full routing table for mesh
@@ -201,6 +203,17 @@ void blinkLed()
 
 void loop() 
 {
+    // if(Serial.available()>0)
+    // {
+    //     char incomingByte = Serial.read();
+
+    //     if(incomingByte == '+')
+    //     {
+    //         Serial.println(F("Power 20 dBm"));
+    //         rf95.setTxPower(23, false);
+    //     }
+    // }
+
   for(uint8_t n=0; n<N_NODES; n++) {
     uint8_t node = nodes[n];
     if (node == nodeId) continue; // self
