@@ -15,121 +15,269 @@ class mesh
     static char buf[RH_MESH_MAX_MESSAGE_LEN];
     static SPIFlash &flash;
 
-public:
-    void setup()
-    {
-        Serial.begin(9600);
+    uint8_t nodeId = 0;
+    uint8_t routes[N_NODES] = {}; // full routing table for mesh
+    int16_t rssi[N_NODES] = {};   // signal strength info
+    uint8_t (&nodeList)[N_NODES];
 
-        if (flash.initialize())
+public:
+    mesh(uint8_t (&nodes)[N_NODES])
+        : nodeList(nodes)
+    {
+        void setup()
         {
-            Serial.println("Init OK!");
-        }
-        else
-        {
-            Serial.println("Init FAIL!");
-        }
+            Serial.begin(9600);
+
+            if (flash.initialize())
+            {
+                Serial.println("Init OK!");
+            }
+            else
+            {
+                Serial.println("Init FAIL!");
+            }
 
 #ifdef LED_BUILTIN
-        pinMode(LED_BUILTIN, OUTPUT);
+            pinMode(LED_BUILTIN, OUTPUT);
 #endif
+            Serial.print("DeviceID: ");
+            Serial.println(flash.readDeviceId(), HEX);
 
-        Serial.print("DeviceID: ");
-        Serial.println(flash.readDeviceId(), HEX);
+            flash.readUniqueId();
 
-        flash.readUniqueId();
-
-        for (uint8_t i = 0; i < 8; i++)
-        {
-            Serial.print(flash.UNIQUEID[i], HEX);
-            Serial.print(' ');
-            nodeId += flash.UNIQUEID[i];
-        }
-        if (nodeId == 0xff)
-        {
-            nodeId -= 1;
-        }
-        Serial.print("\nnodeId Id: ");
-        Serial.println(nodeId, HEX);
-
-        // initialize LED digital pin as an output.
-        pinMode(LED_BUILTIN, OUTPUT);
-
-        manager = new RHMesh(rf95, nodeId);
-
-        if (!manager->init())
-        {
-            Serial.println(F("init failed"));
-        }
-        else
-        {
-            Serial.println("done");
-        }
-        rf95.setTxPower(POWER, false);
-        rf95.setFrequency(FREQMHZ);
-        rf95.setCADTimeout(CAD_TIMEOUT);
-
-        // long range configuration requires for on-air time
-        boolean longRange = false;
-        if (longRange)
-        {
-            RH_RF95::ModemConfig modem_config = {
-                0x78, // Reg 0x1D: BW=125kHz, Coding=4/8, Header=explicit
-                0xC4, // Reg 0x1E: Spread=4096chips/symbol, CRC=enable
-                0x08  // Reg 0x26: LowDataRate=On, Agc=Off.  0x0C is LowDataRate=ON, ACG=ON
-            };
-            rf95.setModemRegisters(&modem_config);
-            if (!rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096))
+            for (uint8_t i = 0; i < 8; i++)
             {
-                Serial.println(F("set config failed"));
+                Serial.print(flash.UNIQUEID[i], HEX);
+                Serial.print(' ');
+                nodeId += flash.UNIQUEID[i];
+            }
+            if (nodeId == 0xff)
+            {
+                nodeId -= 1;
+            }
+            Serial.print("\nnodeId Id: ");
+            Serial.println(nodeId, HEX);
+
+            // initialize LED digital pin as an output.
+            pinMode(LED_BUILTIN, OUTPUT);
+
+            manager = new RHMesh(rf95, nodeId);
+
+            if (!manager->init())
+            {
+                Serial.println(F("init failed"));
+            }
+            else
+            {
+                Serial.println("done");
+            }
+            rf95.setTxPower(POWER, false);
+            rf95.setFrequency(FREQMHZ);
+            rf95.setCADTimeout(CAD_TIMEOUT);
+
+            // long range configuration requires for on-air time
+            boolean longRange = false;
+            if (longRange)
+            {
+                RH_RF95::ModemConfig modem_config = {
+                    0x78, // Reg 0x1D: BW=125kHz, Coding=4/8, Header=explicit
+                    0xC4, // Reg 0x1E: Spread=4096chips/symbol, CRC=enable
+                    0x08  // Reg 0x26: LowDataRate=On, Agc=Off.  0x0C is LowDataRate=ON, ACG=ON
+                };
+                rf95.setModemRegisters(&modem_config);
+                if (!rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096))
+                {
+                    Serial.println(F("set config failed"));
+                }
+            }
+
+            Serial.println("RF95 ready");
+
+            for (uint8_t n = 1; n <= N_NODES; n++)
+            {
+                this->routes[n - 1] = 0;
+                this->rssi[n - 1] = 0;
+            }
+
+            Serial.print(F("mem = "));
+            Serial.println(freeMem());
+        };
+
+        void loop()
+        {
+            for (uint8_t n = 0; n < N_NODES; n++)
+            {
+                uint8_t node = nodes[n];
+                if (node == nodeId)
+                    continue; // self
+
+                updateRoutingTable();
+                getRouteInfoString(buf, RH_MESH_MAX_MESSAGE_LEN);
+
+                Serial.print(F("->"));
+                Serial.print(node, HEX);
+                Serial.print(F(" :"));
+                Serial.print(buf);
+
+                // send an acknowledged message to the target node
+                uint8_t error = manager->sendtoWait((uint8_t *)buf, strlen(buf), node);
+                if (error != RH_ROUTER_ERROR_NONE)
+                {
+                    Serial.println();
+                    Serial.print(F(" ! "));
+                    Serial.println(getErrorString(error));
+                }
+                else
+                {
+                    Serial.println(F(" OK"));
+                    // we received an acknowledgement from the next hop for the node we tried to send to.
+                    RHRouter::RoutingTableEntry *route = manager->getRouteTo(node);
+                    // Serial.println(n);
+                    // Serial.println(route->next_hop);
+                    // Serial.println(node);
+                    if (route->next_hop != 0)
+                    {
+                        setRssiNextHop(route->next_hop, rf95.lastRssi());
+                        rssi[route->next_hop - 1] = rf95.lastRssi();
+                    }
+                }
+                // if (nodeId == nodes[0]) printNodeInfo(nodeId, buf); // debugging
+
+                // listen for incoming messages. Wait a random amount of time before we transmit
+                // again to the next node
+                unsigned long nextTransmit = millis() + random(3000, 5000);
+                while (nextTransmit > millis())
+                {
+                    int waitTime = nextTransmit - millis();
+                    uint8_t len = sizeof(buf);
+                    uint8_t from;
+                    if (manager->recvfromAckTimeout((uint8_t *)buf, &len, waitTime, &from))
+                    {
+                        buf[len] = '\0'; // null terminate string
+                        Serial.print(from, HEX);
+                        Serial.print(F("->"));
+                        Serial.print(F(" :"));
+                        Serial.println(buf);
+                        // if (nodeId == nodes[0]) printNodeInfo(from, buf); // debugging
+                        // we received data from node 'from', but it may have actually come from an intermediate node
+                        RHRouter::RoutingTableEntry *route = manager->getRouteTo(from);
+                        if (route->next_hop != 0)
+                        {
+                            setRssiNextHop(route->next_hop, rf95.lastRssi());
+                            //   rssi[route->next_hop-1] = rf95.lastRssi();
+                            blinkLed();
+                        }
+                    }
+                }
             }
         }
 
-        Serial.println("RF95 ready");
-
-        for (uint8_t n = 1; n <= N_NODES; n++)
+    private:
+        int freeMem()
         {
-            this->routes[n - 1] = 0;
-            this->rssi[n - 1] = 0;
+            extern int __heap_start, *__brkval;
+            int v;
+            return (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
+        };
+
+        const __FlashStringHelper *getErrorString(uint8_t error)
+        {
+            switch (error)
+            {
+            case 1:
+                return F("invalid length");
+                break;
+            case 2:
+                return F("no route");
+                break;
+            case 3:
+                return F("timeout");
+                break;
+            case 4:
+                return F("no reply");
+                break;
+            case 5:
+                return F("unable to deliver");
+                break;
+            }
+            return F("unknown");
         }
 
-        Serial.print(F("mem = "));
-        Serial.println(freeMem());
+        void updateRoutingTable()
+        {
+            for (uint8_t n = 0; n < N_NODES; n++)
+            {
+                uint8_t node = nodes[n];
+                RHRouter::RoutingTableEntry *route = manager->getRouteTo(node);
+                if (node == nodeId)
+                {
+                    this->routes[n] = 255; // self
+                }
+                else
+                {
+                    this->routes[n] = route->next_hop;
+                    if (this->routes[n] == 0)
+                    {
+                        // if we have no route to the node, reset the received signal strength
+                        this->rssi[n] = 0;
+                    }
+                }
+            }
+        };
+
+        // Create a JSON string with the routing info to each node
+        void getRouteInfoString(char *p, size_t len)
+        {
+            p[0] = '\0';
+            strcat(p, "[");
+            for (uint8_t n = 1; n <= N_NODES; n++)
+            {
+                strcat(p, "{\"n\":");
+                sprintf(p + strlen(p), "%02X", this->routes[n - 1]);
+                strcat(p, ",");
+                strcat(p, "\"r\":");
+                sprintf(p + strlen(p), "%4d", this->rssi[n - 1]);
+                strcat(p, "}");
+                if (n < N_NODES)
+                {
+                    strcat(p, ",");
+                }
+            }
+            strcat(p, "]");
+        }
+
+        void printNodeInfo(uint8_t node, char *s)
+        {
+            Serial.print(F("node: "));
+            Serial.print(F("{"));
+            Serial.print(F("\""));
+            Serial.print(node, HEX);
+            Serial.print(F("\""));
+            Serial.print(F(": "));
+            Serial.print(s);
+            Serial.println(F("}"));
+        }
+
+        void setRssiNextHop(uint8_t node, int16_t rssi_val)
+        {
+            for (uint8_t n = 0; n < N_NODES; n++)
+            {
+                if (this->nodeList[n] == node)
+                {
+                    this->rssi[n] = rssi_val;
+                    return;
+                }
+            }
+        }
+
+        void blinkLed()
+        {
+#ifdef LED_BUILTIN
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(100);
+            digitalWrite(LED_BUILTIN, LOW);
+#endif
+        }
     };
-
-private:
-    uint8_t nodeId = 0;
-    uint8_t routes[N_NODES] = {}; // full routing table for mesh
-    int16_t rssi[N_NODES]   = {};   // signal strength info
-
-    int freeMem()
-    {
-        extern int __heap_start, *__brkval;
-        int v;
-        return (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
-    };
-
-    void updateRoutingTable()
-{
-  for (uint8_t n = 0; n < N_NODES; n++)
-  {
-    uint8_t node = nodes[n];
-    RHRouter::RoutingTableEntry *route = manager->getRouteTo(node);
-    if (node == nodeId)
-    {
-      routes[n] = 255; // self
-    }
-    else
-    {
-      routes[n] = route->next_hop;
-      if (routes[n] == 0)
-      {
-        // if we have no route to the node, reset the received signal strength
-        rssi[n] = 0;
-      }
-    }
-  }
-}
-
-};
 
 #endif
