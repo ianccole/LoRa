@@ -21,8 +21,8 @@ class mesh
     uint8_t (&nodeList)[N_NODES];
 
 public:
-    mesh(uint8_t (&nodes)[N_NODES], SPIFlash &flashmem)
-        : flash(flashmem),
+    mesh(uint8_t (&nodes)[N_NODES], SPIFlash &flash)
+        : flash(flash),
           nodeList(nodes)
     {
     }
