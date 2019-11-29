@@ -26,8 +26,6 @@ uint8_t nodeId = 0;
 uint8_t routes[N_NODES] = {}; // full routing table for mesh
 int16_t rssi[N_NODES] = {};   // signal strength info
 
-mesh mymesh(nodes);
-
 // Singleton instance of the radio driver
 RH_RF95 rf95;
 
@@ -39,6 +37,8 @@ char buf[RH_MESH_MAX_MESSAGE_LEN];
 
 // SPIFlash flash(FLASH_SS, 0xEF30);
 SPIFlash flash(SS_FLASHMEM);
+
+mesh mymesh(nodes, flash);
 
 int freeMem()
 {
@@ -82,9 +82,6 @@ void setup()
   }
   Serial.print("\nnodeId Id: ");
   Serial.println(nodeId, HEX);
-
-  // initialize LED digital pin as an output.
-  pinMode(LED_BUILTIN, OUTPUT);
 
   manager = new RHMesh(rf95, nodeId);
 
