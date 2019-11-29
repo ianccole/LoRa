@@ -13,6 +13,7 @@ class mesh
     RH_RF95 rf95;
     RHMesh *manager;
     char buf[RH_MESH_MAX_MESSAGE_LEN];
+    SPIFlash &flash;
 
     uint8_t nodeId = 0;
     uint8_t routes[N_NODES] = {}; // full routing table for mesh
@@ -20,27 +21,48 @@ class mesh
     uint8_t (&nodeList)[N_NODES];
 
 public:
-    mesh(uint8_t (&nodes)[N_NODES], uint8_t node)
-        : 
-        nodeId(node),
-        nodeList(nodes)
-        {}
-
-    mesh(uint8_t (&nodes)[N_NODES])
-        : 
-        nodeList(nodes)
-        {}
+    mesh(uint8_t (&nodes)[N_NODES], SPIFlash &flashmem)
+        : flash(flashmem),
+          nodeList(nodes)
+    {
+    }
 
     void setup()
     {
         Serial.begin(9600);
 
+        if (flash.initialize())
+        {
+            Serial.println("Init OK!");
+        }
+        else
+        {
+            Serial.println("Init FAIL!");
+        }
+
 #ifdef LED_BUILTIN
+        // initialize LED digital pin as an output.
         pinMode(LED_BUILTIN, OUTPUT);
 #endif
 
-        // initialize LED digital pin as an output.
-        pinMode(LED_BUILTIN, OUTPUT);
+        Serial.print("DeviceID: ");
+        Serial.println(flash.readDeviceId(), HEX);
+
+        flash.readUniqueId();
+
+        for (uint8_t i = 0; i < 8; i++)
+        {
+
+            Serial.print(flash.UNIQUEID[i], HEX);
+            Serial.print(' ');
+            nodeId += flash.UNIQUEID[i];
+        }
+        if (nodeId == 0xff)
+        {
+            nodeId -= 1;
+        }
+        Serial.print("\nnodeId Id: ");
+        Serial.println(nodeId, HEX);
 
         manager = new RHMesh(rf95, nodeId);
 
@@ -151,114 +173,114 @@ public:
                 }
             }
         }
+    }
+
+private:
+    int freeMem()
+    {
+        extern int __heap_start, *__brkval;
+        int v;
+        return (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
+    };
+
+    const __FlashStringHelper *getErrorString(uint8_t error)
+    {
+        switch (error)
+        {
+        case 1:
+            return F("invalid length");
+            break;
+        case 2:
+            return F("no route");
+            break;
+        case 3:
+            return F("timeout");
+            break;
+        case 4:
+            return F("no reply");
+            break;
+        case 5:
+            return F("unable to deliver");
+            break;
         }
+        return F("unknown");
+    }
 
-    private:
-        int freeMem()
+    void updateRoutingTable()
+    {
+        for (uint8_t n = 0; n < N_NODES; n++)
         {
-            extern int __heap_start, *__brkval;
-            int v;
-            return (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
-        };
-
-        const __FlashStringHelper *getErrorString(uint8_t error)
-        {
-            switch (error)
+            uint8_t node = nodes[n];
+            RHRouter::RoutingTableEntry *route = manager->getRouteTo(node);
+            if (node == nodeId)
             {
-            case 1:
-                return F("invalid length");
-                break;
-            case 2:
-                return F("no route");
-                break;
-            case 3:
-                return F("timeout");
-                break;
-            case 4:
-                return F("no reply");
-                break;
-            case 5:
-                return F("unable to deliver");
-                break;
+                this->routes[n] = 255; // self
             }
-            return F("unknown");
+            else
+            {
+                this->routes[n] = route->next_hop;
+                if (this->routes[n] == 0)
+                {
+                    // if we have no route to the node, reset the received signal strength
+                    this->rssi[n] = 0;
+                }
+            }
         }
+    };
 
-        void updateRoutingTable()
+    // Create a JSON string with the routing info to each node
+    void getRouteInfoString(char *p, size_t len)
+    {
+        p[0] = '\0';
+        strcat(p, "[");
+        for (uint8_t n = 1; n <= N_NODES; n++)
         {
-            for (uint8_t n = 0; n < N_NODES; n++)
+            strcat(p, "{\"n\":");
+            sprintf(p + strlen(p), "%02X", this->routes[n - 1]);
+            strcat(p, ",");
+            strcat(p, "\"r\":");
+            sprintf(p + strlen(p), "%4d", this->rssi[n - 1]);
+            strcat(p, "}");
+            if (n < N_NODES)
             {
-                uint8_t node = nodes[n];
-                RHRouter::RoutingTableEntry *route = manager->getRouteTo(node);
-                if (node == nodeId)
-                {
-                    this->routes[n] = 255; // self
-                }
-                else
-                {
-                    this->routes[n] = route->next_hop;
-                    if (this->routes[n] == 0)
-                    {
-                        // if we have no route to the node, reset the received signal strength
-                        this->rssi[n] = 0;
-                    }
-                }
-            }
-        };
-
-        // Create a JSON string with the routing info to each node
-        void getRouteInfoString(char *p, size_t len)
-        {
-            p[0] = '\0';
-            strcat(p, "[");
-            for (uint8_t n = 1; n <= N_NODES; n++)
-            {
-                strcat(p, "{\"n\":");
-                sprintf(p + strlen(p), "%02X", this->routes[n - 1]);
                 strcat(p, ",");
-                strcat(p, "\"r\":");
-                sprintf(p + strlen(p), "%4d", this->rssi[n - 1]);
-                strcat(p, "}");
-                if (n < N_NODES)
-                {
-                    strcat(p, ",");
-                }
             }
-            strcat(p, "]");
         }
+        strcat(p, "]");
+    }
 
-        void printNodeInfo(uint8_t node, char *s)
-        {
-            Serial.print(F("node: "));
-            Serial.print(F("{"));
-            Serial.print(F("\""));
-            Serial.print(node, HEX);
-            Serial.print(F("\""));
-            Serial.print(F(": "));
-            Serial.print(s);
-            Serial.println(F("}"));
-        }
+    void printNodeInfo(uint8_t node, char *s)
+    {
+        Serial.print(F("node: "));
+        Serial.print(F("{"));
+        Serial.print(F("\""));
+        Serial.print(node, HEX);
+        Serial.print(F("\""));
+        Serial.print(F(": "));
+        Serial.print(s);
+        Serial.println(F("}"));
+    }
 
-        void setRssiNextHop(uint8_t node, int16_t rssi_val)
+    void setRssiNextHop(uint8_t node, int16_t rssi_val)
+    {
+        for (uint8_t n = 0; n < N_NODES; n++)
         {
-            for (uint8_t n = 0; n < N_NODES; n++)
+            if (this->nodeList[n] == node)
             {
-                if (this->nodeList[n] == node)
-                {
-                    this->rssi[n] = rssi_val;
-                    return;
-                }
+                this->rssi[n] = rssi_val;
+                return;
             }
         }
+    }
 
-        void blinkLed()
-        {
+    void blinkLed()
+    {
 #ifdef LED_BUILTIN
-            digitalWrite(LED_BUILTIN, HIGH);
-            delay(100);
-            digitalWrite(LED_BUILTIN, LOW);
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(100);
+        digitalWrite(LED_BUILTIN, LOW);
 #endif
-        }
+    }
 };
 
 #endif
