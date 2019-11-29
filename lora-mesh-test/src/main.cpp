@@ -8,13 +8,13 @@
 #include <Arduino.h>
 #include <SPIFlash.h>
 
-#include <RHRouter.h>
-#include <RHMesh.h>
-#include <RH_RF95.h>
-#define RH_HAVE_SERIAL
-#define FREQMHZ 434.4
-#define POWER 23
-#define CAD_TIMEOUT 500
+// #include <RHRouter.h>
+// #include <RHMesh.h>
+// #include <RH_RF95.h>
+// #define RH_HAVE_SERIAL
+// #define FREQMHZ 434.4
+// #define POWER 23
+// #define CAD_TIMEOUT 500
 
 uint8_t nodes[] = {0x23, 0x8a, 0xe3, 0x52, 0xfe};
 

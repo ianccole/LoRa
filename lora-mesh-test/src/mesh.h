@@ -6,6 +6,9 @@
 #include <RHMesh.h>
 #include <RH_RF95.h>
 #define RH_HAVE_SERIAL
+#define FREQMHZ 434.4
+#define POWER 23
+#define CAD_TIMEOUT 500
 
 class mesh
 {
