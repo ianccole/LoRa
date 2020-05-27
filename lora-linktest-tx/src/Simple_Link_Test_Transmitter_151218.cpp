@@ -119,18 +119,8 @@ void Send_Test_Packet(char lmode)
 {
   //build and send the test packet
 
-  if (lora_TestPower > 9)
-  {
-    lora_TXBUFF[0] = '1';
-    lora_TXBUFF[1] = ((lora_TestPower - 10) + 0x30);
-  }
-  else
-  {
-    lora_TXBUFF[0] = '0';
-    lora_TXBUFF[1] = (lora_TestPower + 0x30);
-    
-  }
-
+  sprintf((char *)lora_TXBUFF, "%02d", lora_TestPower);
+  
   lora_TXBUFF[2] = lmode;
 
   lora_TXEnd = 2;

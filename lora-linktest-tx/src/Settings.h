@@ -33,8 +33,8 @@ const uint16_t  CalibrationOffset = 0;           //adjustment for frequency in H
 #define SpreadingFactor SF7                      //LoRa spreading factor
 #define CodeRate CR45                            //LoRa coding rate
 
-const int8_t start_power = 10;                   //Start power for transmissions
-const int8_t end_power = 0;                      //End power for transmissions
+const int8_t start_power = 17;                   //Start power for transmissions
+const int8_t end_power = 2;                      //End power for transmissions
 
 const uint16_t LoopStartTone_lengthmS = 500;     //length of LoopStartTone in mS
 const uint16_t ModeStartDelaymS = 2000;          //delay in mS after sending mode change at start of loop, gives RX time to print and log packet totals.

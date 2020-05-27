@@ -31,6 +31,10 @@
         },
         {
             "path": "."
+        },
+        {
+            "name": "ProMiniBlink",
+            "path": "../../Users/Ian Cole/Documents/PlatformIO/Projects/ProMiniBlink"
         }
     ],
     "settings": {}
