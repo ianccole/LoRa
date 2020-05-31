@@ -1,10 +1,6 @@
 {
 	"folders": [
         {
-            "name": "blink-serial",
-            "path": "C:\\work\\blink\\blink-serial"
-        },
-        {
             "name": "lora-blink-uniqueid",
             "path": "lora-blink-uniqueid"
         },
@@ -27,14 +23,7 @@
             "path": "lora-mesh-test"
         },
         {
-            "path": "/home/pi/work/lora-mesh"
-        },
-        {
-            "path": "."
-        },
-        {
-            "name": "ProMiniBlink",
-            "path": "../../Users/Ian Cole/Documents/PlatformIO/Projects/ProMiniBlink"
+            "path": "lora-range-test_tx"
         }
     ],
     "settings": {}
