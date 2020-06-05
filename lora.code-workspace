@@ -1,10 +1,6 @@
 {
 	"folders": [
         {
-            "name": "blink-serial",
-            "path": "C:\\work\\blink\\blink-serial"
-        },
-        {
             "name": "lora-blink-uniqueid",
             "path": "lora-blink-uniqueid"
         },
@@ -27,10 +23,7 @@
             "path": "lora-mesh-test"
         },
         {
-            "path": "/home/pi/work/lora-mesh"
-        },
-        {
-            "path": "."
+            "path": "lora-range-test_tx"
         }
     ],
     "settings": {}

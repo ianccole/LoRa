@@ -20,8 +20,6 @@ uint8_t nodes[] = {0x23, 0x8a, 0xe3, 0x52, 0xfe};
 
 #define N_NODES (sizeof(nodes) / sizeof(nodes[0]))
 
-#include <mesh.h>
-
 uint8_t nodeId = 0;
 uint8_t routes[N_NODES] = {}; // full routing table for mesh
 int16_t rssi[N_NODES] = {};   // signal strength info
@@ -125,23 +123,26 @@ const __FlashStringHelper *getErrorString(uint8_t error)
 {
   switch (error)
   {
-  case 1:
-    return F("invalid length");
+  case RH_ROUTER_ERROR_NONE:
+    return F(" OK");
     break;
-  case 2:
-    return F("no route");
+  case RH_ROUTER_ERROR_INVALID_LENGTH:
+    return F(" INV");
     break;
-  case 3:
-    return F("timeout");
+  case RH_ROUTER_ERROR_NO_ROUTE:
+    return F(" NR");
     break;
-  case 4:
-    return F("no reply");
+  case RH_ROUTER_ERROR_TIMEOUT:
+    return F(" TO");
     break;
-  case 5:
-    return F("unable to deliver");
+  case RH_ROUTER_ERROR_NO_REPLY:
+    return F(" NAK");
+    break;
+  case RH_ROUTER_ERROR_UNABLE_TO_DELIVER:
+    return F(" DEL");
     break;
   }
-  return F("unknown");
+  return F(" unknown");
 }
 
 void updateRoutingTable()
@@ -222,17 +223,6 @@ void blinkLed()
 
 void loop()
 {
-  // if(Serial.available()>0)
-  // {
-  //     char incomingByte = Serial.read();
-
-  //     if(incomingByte == '+')
-  //     {
-  //         Serial.println(F("Power 20 dBm"));
-  //         rf95.setTxPower(23, false);
-  //     }
-  // }
-
   for (uint8_t n = 0; n < N_NODES; n++)
   {
     uint8_t node = nodes[n];
@@ -249,15 +239,9 @@ void loop()
 
     // send an acknowledged message to the target node
     uint8_t error = manager->sendtoWait((uint8_t *)buf, strlen(buf), node);
-    if (error != RH_ROUTER_ERROR_NONE)
+    Serial.println(getErrorString(error));
+    if (error == RH_ROUTER_ERROR_NONE)
     {
-      Serial.println();
-      Serial.print(F(" ! "));
-      Serial.println(getErrorString(error));
-    }
-    else
-    {
-      Serial.println(F(" OK"));
       // we received an acknowledgement from the next hop for the node we tried to send to.
       RHRouter::RoutingTableEntry *route = manager->getRouteTo(node);
       // Serial.println(n);

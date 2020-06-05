@@ -1600,8 +1600,8 @@ void lora_TXONLoRa(uint8_t TXPower)
   Serial.println(F("dBm  "));
 #endif
   lora_StartTXTime = millis();
-  lora_Write(lora_RegPaConfig, (TXPower + 0xEE));   //set TX power
-  lora_Write(lora_RegOpMode, 0x8B);                 //TX on direct mode, low frequency mode
+  lora_Write(lora_RegPaConfig, (TXPower-2) + 0xE0); // pout = 17-(15-OutPutPower)
+  lora_Write(lora_RegOpMode, 0x0B); //TX on direct mode, low frequency mode
 }
 
 
