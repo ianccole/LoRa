@@ -3,8 +3,10 @@
 
 const uint32_t frequency = 434400000;
 const uint32_t baud = 115200;
-int counter = 0;
+const uint8_t destination, localAddress = 0xff;
 
+
+int msgCount = 0;
 
 void sendMessage(String outgoing) {
   LoRa.beginPacket();                   // start packet
@@ -31,15 +33,15 @@ void setup() {
 
 void loop() {
   Serial.print("Sending packet: ");
-  Serial.println(counter);
+  Serial.println(msgCount);
 
   // send packet
   LoRa.beginPacket();
   LoRa.print("hello ");
-  LoRa.print(counter);
+  LoRa.print(msgCount);
   LoRa.endPacket();
 
-  counter++;
+  msgCount++;
 
   delay(5000);
 }
