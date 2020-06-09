@@ -24,7 +24,7 @@ uint8_t nodeId = 0;
 uint8_t routes[N_NODES] = {}; // full routing table for mesh
 int16_t rssi[N_NODES] = {};   // signal strength info
 
-mesh mymesh(nodes);
+// mesh mymesh(nodes);
 
 // Singleton instance of the radio driver
 RH_RF95 rf95;
