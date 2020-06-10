@@ -10,7 +10,6 @@
 #include <RHRouter.h>
 #include <RHMesh.h>
 #include <RH_RF95.h>
-#define RH_HAVE_SERIAL
 #define FREQMHZ 434.4
 #define POWER 20
 #define CAD_TIMEOUT 500
@@ -90,6 +89,10 @@ void handleData() {
 
       case 'W':
         EEPROM.put(0, nodeInfo);
+        break;
+
+      case 'R':
+        manager->printRoutingTable();
         break;
     }
   }
