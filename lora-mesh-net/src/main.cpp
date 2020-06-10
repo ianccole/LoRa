@@ -14,6 +14,8 @@
 #define POWER 20
 #define CAD_TIMEOUT 500
 
+#include <MeshNet.h>
+
 struct nodeInfo
 {
   uint8_t nodeId;
@@ -42,7 +44,8 @@ RH_RF95 rf95;
 RHMesh *manager;
 
 // message buffer
-const uint8_t buflen = 128;
+const uint8_t buflen = RH_MESH_MAX_MESSAGE_LEN;
+// const uint8_t buflen = 128;
 char buf[buflen];
 
 void recvWithEndMarker() {
