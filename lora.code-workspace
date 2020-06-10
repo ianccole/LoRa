@@ -24,6 +24,9 @@
         },
         {
             "path": "lora-range-test_tx"
+        },
+        {
+            "path": "lora-mesh-net"
         }
     ],
     "settings": {}
