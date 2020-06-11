@@ -12,6 +12,7 @@
 RH_RF95 MeshNet::rf95;
 
 MeshNet::MeshNetPingMessage msg;
+static char buffer[40];
 
 void MeshNet::setup(uint8_t thisAddress, float freqMHz, int8_t power, uint16_t cad_timeout)
 {
@@ -83,12 +84,11 @@ void MeshNet::pingNode(uint8_t address, uint8_t flags)
 
         case RH_ROUTER_ERROR_NONE:
         {
-            int16_t lastRSSI;
-            int lastSNR;
-
             RHRouter::RoutingTableEntry *route = manager->getRouteTo(address);
-            lastRSSI = rf95.lastRssi();
-            lastSNR = rf95.lastSNR();
+
+            sprintf(buffer, "Sent to:%3d ACKed from:%3d RSSI:%3d SNR:%3d\n", 
+                address, route->next_hop, rf95.lastRssi(), rf95.lastSNR());
+            Serial.print(buffer);
         }
         break;
     }
