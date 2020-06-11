@@ -66,6 +66,7 @@ private:
     // Class to manage message delivery and receipt, using the driver declared above
     RHMesh *manager;
 
+    uint8_t sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t dest, uint8_t flags = 0);
 
 };
 #endif

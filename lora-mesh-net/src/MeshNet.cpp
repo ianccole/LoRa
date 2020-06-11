@@ -56,25 +56,54 @@ void MeshNet::loop(uint16_t wait_ms)
 {
 	uint8_t len = sizeof(msg);
 	uint8_t from;
+
 	if (manager->recvfromAckTimeout((uint8_t *)&msg, &len, wait_ms, &from))
 	{
 		blinkLed();
-	    Serial.println("incoming");
+
+        MeshMessageHeader *p = (MeshMessageHeader *)&msg;
+
+        if (len >= 1)
+        {
+            RHRouter::RoutingTableEntry *route = manager->getRouteTo(from);
+            sprintf(buffer, "Rx: from:%3d RSSI:%3d SNR:%3d\n", 
+                route->next_hop, rf95.lastRssi(), rf95.lastSNR());
+            Serial.print(buffer);
+
+            switch(p->msgType)
+            {
+                case MESH_NET_MESSAGE_TYPE_PING_RESPONSE:
+                {
+                    MeshNetPingMessage *a = (MeshNetPingMessage *)p;
+                    sprintf(buffer, "Ping RSP: tx power:%3d Dest RSSI:%3d Dest SNR:%3d\n", 
+                        a->power, a->rssi, a->snr);
+                    Serial.print(buffer);
+                    break;
+                }
+                case MESH_NET_MESSAGE_TYPE_PING_REQUEST:
+                    msg.header.msgType = MESH_NET_MESSAGE_TYPE_PING_RESPONSE;
+                    msg.power = power;
+                    msg.rssi = rf95.lastRssi();
+                    msg.snr = rf95.lastSNR();
+
+                    sendtoWaitStats((uint8_t*)&msg, sizeof(MeshNet::MeshNetPingMessage), from);
+                    break;
+
+                default:
+                    Serial.println("unhandled");
+                    break;
+            }
+        }
+
 	}
 }
 
-void MeshNet::pingNode(uint8_t address, uint8_t flags)
+uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uint8_t flags)
 {
-	uint8_t error;
-
-	memset(&msg, 0, sizeof(MeshNet::MeshNetPingMessage));
-
-    msg.header.msgType = MESH_NET_MESSAGE_TYPE_PING_REQUEST;
-	msg.power = power;
-    
 	blinkLed();
 	Serial.println("outgoing");
-	error = manager->sendtoWait((uint8_t*)&msg, sizeof(MeshNet::MeshNetPingMessage), address, flags);
+
+	uint8_t error = manager->sendtoWait(buf, len, address, flags);
 
     switch(error)
     {
@@ -92,4 +121,35 @@ void MeshNet::pingNode(uint8_t address, uint8_t flags)
         }
         break;
     }
+
+    return error;
+}
+
+void MeshNet::pingNode(uint8_t address, uint8_t flags)
+{
+	// uint8_t error;
+
+	memset(&msg, 0, sizeof(MeshNet::MeshNetPingMessage));
+
+    msg.header.msgType = MESH_NET_MESSAGE_TYPE_PING_REQUEST;
+	msg.power = power;
+    
+	sendtoWaitStats((uint8_t*)&msg, sizeof(MeshNet::MeshNetPingMessage), address, flags);
+
+    // switch(error)
+    // {
+    //     case RH_ROUTER_ERROR_NO_ROUTE:
+    //         Serial.println("no route");
+    //         break;
+
+    //     case RH_ROUTER_ERROR_NONE:
+    //     {
+    //         RHRouter::RoutingTableEntry *route = manager->getRouteTo(address);
+
+    //         sprintf(buffer, "Sent to:%3d ACKed from:%3d RSSI:%3d SNR:%3d\n", 
+    //             address, route->next_hop, rf95.lastRssi(), rf95.lastSNR());
+    //         Serial.print(buffer);
+    //     }
+    //     break;
+    // }
 }
