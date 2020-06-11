@@ -165,98 +165,98 @@ void setup()
   Serial.println(freeMem());
 }
 
-const __FlashStringHelper *getErrorString(uint8_t error)
-{
-  switch (error)
-  {
-  case RH_ROUTER_ERROR_NONE:
-    return F(" OK");
-    break;
-  case RH_ROUTER_ERROR_INVALID_LENGTH:
-    return F(" INV");
-    break;
-  case RH_ROUTER_ERROR_NO_ROUTE:
-    return F(" NR");
-    break;
-  case RH_ROUTER_ERROR_TIMEOUT:
-    return F(" TO");
-    break;
-  case RH_ROUTER_ERROR_NO_REPLY:
-    return F(" NAK");
-    break;
-  case RH_ROUTER_ERROR_UNABLE_TO_DELIVER:
-    return F(" DEL");
-    break;
-  }
-  return F(" unknown");
-}
+// const __FlashStringHelper *getErrorString(uint8_t error)
+// {
+//   switch (error)
+//   {
+//   case RH_ROUTER_ERROR_NONE:
+//     return F(" OK");
+//     break;
+//   case RH_ROUTER_ERROR_INVALID_LENGTH:
+//     return F(" INV");
+//     break;
+//   case RH_ROUTER_ERROR_NO_ROUTE:
+//     return F(" NR");
+//     break;
+//   case RH_ROUTER_ERROR_TIMEOUT:
+//     return F(" TO");
+//     break;
+//   case RH_ROUTER_ERROR_NO_REPLY:
+//     return F(" NAK");
+//     break;
+//   case RH_ROUTER_ERROR_UNABLE_TO_DELIVER:
+//     return F(" DEL");
+//     break;
+//   }
+//   return F(" unknown");
+// }
 
-void updateRoutingTable()
-{
-  for (uint8_t n = 0; n < N_NODES; n++)
-  {
-    uint8_t node = nodes[n];
-    RHRouter::RoutingTableEntry *route = manager->getRouteTo(node);
-    if (node == nodeId)
-    {
-      routes[n] = 255; // self
-    }
-    else
-    {
-      routes[n] = route->next_hop;
-      if (routes[n] == 0)
-      {
-        // if we have no route to the node, reset the received signal strength
-        rssi[n] = 0;
-      }
-    }
-  }
-}
+// void updateRoutingTable()
+// {
+//   for (uint8_t n = 0; n < N_NODES; n++)
+//   {
+//     uint8_t node = nodes[n];
+//     RHRouter::RoutingTableEntry *route = manager->getRouteTo(node);
+//     if (node == nodeId)
+//     {
+//       routes[n] = 255; // self
+//     }
+//     else
+//     {
+//       routes[n] = route->next_hop;
+//       if (routes[n] == 0)
+//       {
+//         // if we have no route to the node, reset the received signal strength
+//         rssi[n] = 0;
+//       }
+//     }
+//   }
+// }
 
-// Create a JSON string with the routing info to each node
-void getRouteInfoString(char *p, size_t len)
-{
-  p[0] = '\0';
-  strcat(p, "[");
-  for (uint8_t n = 1; n <= N_NODES; n++)
-  {
-    strcat(p, "{\"n\":");
-    sprintf(p + strlen(p), "%02X", routes[n - 1]);
-    strcat(p, ",");
-    strcat(p, "\"r\":");
-    sprintf(p + strlen(p), "%4d", rssi[n - 1]);
-    strcat(p, "}");
-    if (n < N_NODES)
-    {
-      strcat(p, ",");
-    }
-  }
-  strcat(p, "]");
-}
+// // Create a JSON string with the routing info to each node
+// void getRouteInfoString(char *p, size_t len)
+// {
+//   p[0] = '\0';
+//   strcat(p, "[");
+//   for (uint8_t n = 1; n <= N_NODES; n++)
+//   {
+//     strcat(p, "{\"n\":");
+//     sprintf(p + strlen(p), "%02X", routes[n - 1]);
+//     strcat(p, ",");
+//     strcat(p, "\"r\":");
+//     sprintf(p + strlen(p), "%4d", rssi[n - 1]);
+//     strcat(p, "}");
+//     if (n < N_NODES)
+//     {
+//       strcat(p, ",");
+//     }
+//   }
+//   strcat(p, "]");
+// }
 
-void printNodeInfo(uint8_t node, char *s)
-{
-  Serial.print(F("node: "));
-  Serial.print(F("{"));
-  Serial.print(F("\""));
-  Serial.print(node, HEX);
-  Serial.print(F("\""));
-  Serial.print(F(": "));
-  Serial.print(s);
-  Serial.println(F("}"));
-}
+// void printNodeInfo(uint8_t node, char *s)
+// {
+//   Serial.print(F("node: "));
+//   Serial.print(F("{"));
+//   Serial.print(F("\""));
+//   Serial.print(node, HEX);
+//   Serial.print(F("\""));
+//   Serial.print(F(": "));
+//   Serial.print(s);
+//   Serial.println(F("}"));
+// }
 
-void setRssiNextHop(uint8_t node, int16_t rssi_val)
-{
-  for (uint8_t n = 0; n < N_NODES; n++)
-  {
-    if (nodes[n] == node)
-    {
-      rssi[n] = rssi_val;
-      return;
-    }
-  }
-}
+// void setRssiNextHop(uint8_t node, int16_t rssi_val)
+// {
+//   for (uint8_t n = 0; n < N_NODES; n++)
+//   {
+//     if (nodes[n] == node)
+//     {
+//       rssi[n] = rssi_val;
+//       return;
+//     }
+//   }
+// }
 
 // void blinkLed()
 // {
