@@ -66,8 +66,8 @@ void MeshNet::loop(uint16_t wait_ms)
         if (len >= 1)
         {
             RHRouter::RoutingTableEntry *route = manager->getRouteTo(from);
-            sprintf(buffer, "Rx: from:%3d RSSI:%3d SNR:%3d\n", 
-                route->next_hop, rf95.lastRssi(), rf95.lastSNR());
+            sprintf(buffer, "Rx (%d): from:%3d RSSI:%3d SNR:%3d\n", 
+                len, route->next_hop, rf95.lastRssi(), rf95.lastSNR());
             Serial.print(buffer);
 
             switch(p->msgType)
@@ -86,22 +86,26 @@ void MeshNet::loop(uint16_t wait_ms)
                     msg.rssi = rf95.lastRssi();
                     msg.snr = rf95.lastSNR();
 
+                    sprintf(buffer, "Ping REQ:%3d next hop:%3d RSSI:%3d SNR:%3d\n", 
+                        from, route->next_hop, rf95.lastRssi(), rf95.lastSNR());
+                    Serial.print(buffer);
+
                     sendtoWaitStats((uint8_t*)&msg, sizeof(MeshNet::MeshNetPingMessage), from);
                     break;
 
                 default:
-                    Serial.println("unhandled");
+                    sprintf(buffer, "Unhandled:%3d\n", p->msgType);
+                    Serial.print(buffer);
                     break;
             }
         }
-
 	}
 }
 
 uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uint8_t flags)
 {
 	blinkLed();
-	Serial.println("outgoing");
+	// Serial.println("outgoing");
 
 	uint8_t error = manager->sendtoWait(buf, len, address, flags);
 
@@ -115,7 +119,7 @@ uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uin
         {
             RHRouter::RoutingTableEntry *route = manager->getRouteTo(address);
 
-            sprintf(buffer, "Sent to:%3d ACKed from:%3d RSSI:%3d SNR:%3d\n", 
+            sprintf(buffer, "Sent to:%3d next hop:%3d RSSI:%3d SNR:%3d\n", 
                 address, route->next_hop, rf95.lastRssi(), rf95.lastSNR());
             Serial.print(buffer);
         }

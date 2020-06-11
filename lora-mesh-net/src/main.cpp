@@ -29,13 +29,13 @@ char buffer[numChars];   // an array to store the received data
 bool newData = false;
 bool serialData = false;
 
-uint8_t nodes[] = {0x23, 0x8a, 0xe3, 0x52, 0xfe};
+// uint8_t nodes[] = {0x23, 0x8a, 0xe3, 0x52, 0xfe};
 
-#define N_NODES (sizeof(nodes) / sizeof(nodes[0]))
+// #define N_NODES (sizeof(nodes) / sizeof(nodes[0]))
 
 uint8_t nodeId = 0;
-uint8_t routes[N_NODES] = {}; // full routing table for mesh
-int16_t rssi[N_NODES] = {};   // signal strength info
+// uint8_t routes[N_NODES] = {}; // full routing table for mesh
+// int16_t rssi[N_NODES] = {};   // signal strength info
 
 // Singleton instance of the radio driver
 // RH_RF95 rf95;
