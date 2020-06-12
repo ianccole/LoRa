@@ -29,8 +29,8 @@ public:
     {
         MeshMessageHeader   header;  ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
         uint8_t             power;   ///< Transmit power of this message
-        uint8_t             rssi;    ///< RSSI in Ping response
-        uint8_t             snr;     ///< SNR in Ping response
+        int8_t              rssi;    ///< RSSI in Ping response
+        int8_t              snr;     ///< SNR in Ping response
     } MeshNetPingMessage;
 
     void setup(uint8_t thisAddress, float freqMHz, int8_t power, uint16_t cad_timeout);
