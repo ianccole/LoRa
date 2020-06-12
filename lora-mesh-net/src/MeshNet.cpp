@@ -107,6 +107,9 @@ uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uin
 	blinkLed();
 	// Serial.println("outgoing");
 
+    // sprintf(buffer, "OUT:%02x %02x %02x %02x\n", *buf, *(buf+1), *(buf+2), *(buf+3));
+    // Serial.print(buffer);
+
 	uint8_t error = manager->sendtoWait(buf, len, address, flags);
 
     switch(error)
