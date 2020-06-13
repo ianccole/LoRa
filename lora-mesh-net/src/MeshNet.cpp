@@ -12,7 +12,7 @@
 RH_RF95 MeshNet::rf95;
 
 MeshNet::MeshNetPingMessage msg;
-static char buffer[40];
+static char buffer[80];
 
 void MeshNet::setup(uint8_t thisAddress, float freqMHz, int8_t power, uint16_t cad_timeout)
 {
@@ -66,8 +66,8 @@ void MeshNet::loop(uint16_t wait_ms)
         if (len >= 1)
         {
             RHRouter::RoutingTableEntry *route = manager->getRouteTo(from);
-            sprintf(buffer, "Rx (%d): from:%3d RSSI:%3d SNR:%3d\n", 
-                len, route->next_hop, rf95.lastRssi(), rf95.lastSNR());
+            sprintf(buffer, "Rx: from:%3d RSSI:%3d SNR:%3d\n", 
+                route->next_hop, rf95.lastRssi(), rf95.lastSNR());
             Serial.print(buffer);
 
             switch(p->msgType)
@@ -75,7 +75,7 @@ void MeshNet::loop(uint16_t wait_ms)
                 case MESH_NET_MESSAGE_TYPE_PING_RESPONSE:
                 {
                     MeshNetPingMessage *a = (MeshNetPingMessage *)p;
-                    sprintf(buffer, "Ping RSP: tx power:%3d Dest RSSI:%3d Dest SNR:%3d\n", 
+                    sprintf(buffer, "Ping RSP: power:%3d RSSI:%3d SNR:%3d\n", 
                         a->power, a->rssi, a->snr);
                     Serial.print(buffer);
                     break;
