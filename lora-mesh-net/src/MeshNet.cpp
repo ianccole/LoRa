@@ -160,3 +160,8 @@ void MeshNet::pingNode(uint8_t address, uint8_t flags)
     //     break;
     // }
 }
+
+void MeshNet::arpNode(uint8_t address)
+{
+    manager->doArp(address);
+}

@@ -4,8 +4,8 @@
 
 // Types of MeshNet message, used to set msgType in the MeshNetHeader
 #define MESH_NET_MESSAGE_TYPE_ROUTE_FAILURE                  0
-#define MESH_NET_MESSAGE_TYPE_PING_REQUEST                   1
-#define MESH_NET_MESSAGE_TYPE_PING_RESPONSE                  2
+#define MESH_NET_MESSAGE_TYPE_PING_REQUEST                   0x50
+#define MESH_NET_MESSAGE_TYPE_PING_RESPONSE                  0x51
 
 class MeshNet
 {
@@ -38,6 +38,8 @@ public:
     void loop(uint16_t wait_ms);
 
     void pingNode(uint8_t address, uint8_t flags = 0);
+
+    void arpNode(uint8_t address);
 
     int16_t lastRssi()
     {

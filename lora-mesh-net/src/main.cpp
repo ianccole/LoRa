@@ -102,6 +102,13 @@ void handleData() {
         mesh.pingNode(nodeId);
         break;
 
+      case 'A':
+        nodeId = atoi(&buffer[1]);
+        sprintf(buffer, "ARP Node id: 0x%02X\n", nodeId);
+        Serial.print(buffer);
+        mesh.arpNode(nodeId);
+        break;
+
       case 'R':
         mesh.printRoutingTable();
         break;
