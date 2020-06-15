@@ -18,7 +18,7 @@ void MeshNet::setup(uint8_t thisAddress, float freqMHz, int8_t power, uint16_t c
 {
 	MeshNet::power = power;
 	manager = new RHMesh(rf95, thisAddress);
-
+    ping=0;
 	if (!manager->init())
 	{
 	Serial.println(F("init failed"));
@@ -52,10 +52,21 @@ void MeshNet::setup(uint8_t thisAddress, float freqMHz, int8_t power, uint16_t c
 
 }
 
+unsigned long previousMillis = 0; 
+const long intervalMillis = 5000;
+
 void MeshNet::loop(uint16_t wait_ms)
 {
 	uint8_t len = sizeof(msg);
 	uint8_t from;
+    unsigned long currentMillis = millis();
+
+    if(ping && currentMillis - previousMillis >= intervalMillis)
+    {
+        previousMillis = currentMillis;
+        
+        pingNode(ping);
+    }
 
 	if (manager->recvfromAckTimeout((uint8_t *)&msg, &len, wait_ms, &from))
 	{

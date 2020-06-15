@@ -99,7 +99,8 @@ void handleData() {
         nodeId = atoi(&buffer[1]);
         sprintf(buffer, "Ping Node id: 0x%02X\n", nodeId);
         Serial.print(buffer);
-        mesh.pingNode(nodeId);
+        // mesh.pingNode(nodeId);
+        mesh.ping = nodeId;
         break;
 
       case 'A':

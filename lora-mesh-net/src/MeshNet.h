@@ -60,6 +60,8 @@ public:
         #endif
     };
 
+    uint8_t ping;
+
 private:
     int8_t power;
     // Singleton instance of the radio driver
