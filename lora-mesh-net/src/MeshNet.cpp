@@ -4,8 +4,6 @@
 #include <RH_RF95.h>
 #include <MeshNet.h>
 
-#define UseSD1306 
-
 #ifdef UseSD1306
 #define SD1306_Address 0x3C                       //define I2C address foe SD1306
 #define LCDI2C_Address 0x3F                       //define I2C address for PCF8574 LCD backpack, usually 0x27 or 0x3F
@@ -29,9 +27,11 @@ int freeMem()
 void printMsg(const char * msg, bool clear=false)
 {
     // disp.setCursor(0, row);
+#ifdef UseSD1306
     if(clear)
         disp.clear();
     disp.print(msg);
+#endif
     Serial.print(msg);
 }
 
