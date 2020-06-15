@@ -4,26 +4,56 @@
 #include <RH_RF95.h>
 #include <MeshNet.h>
 
+#define UseSD1306 
 
-#define FREQMHZ 434.4
-#define POWER 20
-#define CAD_TIMEOUT 500
+#ifdef UseSD1306
+#define SD1306_Address 0x3C                       //define I2C address foe SD1306
+#define LCDI2C_Address 0x3F                       //define I2C address for PCF8574 LCD backpack, usually 0x27 or 0x3F
+#include "SSD1306Ascii.h"                   //https://github.com/greiman/SSD1306Ascii
+#include "SSD1306AsciiWire.h"
+SSD1306AsciiWire disp;
+#endif
 
 RH_RF95 MeshNet::rf95;
 
 MeshNet::MeshNetPingMessage msg;
-static char buffer[80];
+static char buffer[50];
+
+int freeMem()
+{
+  extern int __heap_start, *__brkval;
+  int v;
+  return (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
+}
+
+void printMsg(const char * msg, bool clear=false)
+{
+    // disp.setCursor(0, row);
+    if(clear)
+        disp.clear();
+    disp.print(msg);
+    Serial.print(msg);
+}
 
 void MeshNet::setup(uint8_t thisAddress, float freqMHz, int8_t power, uint16_t cad_timeout)
 {
 	MeshNet::power = power;
 	manager = new RHMesh(rf95, thisAddress);
 
+#ifdef UseSD1306
+    disp.begin(&Adafruit128x64, SD1306_Address);
+    disp.setFont(Adafruit5x7);
+    disp.set1X();
+#endif
+
 	if (!manager->init())
 	{
-	Serial.println(F("init failed"));
-	return;
+        Serial.println(F("init failed"));
+        return;
 	}
+
+    sprintf(buffer, "RF95 ready(mem = %d)\n",freeMem());
+    printMsg(buffer, true);
 
 #ifdef LED_BUILTIN
 	pinMode(LED_BUILTIN, OUTPUT);
@@ -56,8 +86,11 @@ void MeshNet::loop(uint16_t wait_ms)
 {
 	uint8_t len = sizeof(msg);
 	uint8_t from;
+	uint8_t dest;
+    uint8_t id;
 
-	if (manager->recvfromAckTimeout((uint8_t *)&msg, &len, wait_ms, &from))
+
+	if (manager->recvfromAckTimeout((uint8_t *)&msg, &len, wait_ms, &from, &dest, &id))
 	{
 		blinkLed();
 
@@ -66,33 +99,35 @@ void MeshNet::loop(uint16_t wait_ms)
         if (len >= 1)
         {
             RHRouter::RoutingTableEntry *route = manager->getRouteTo(from);
-            sprintf(buffer, "Rx: from:%3d RSSI:%3d SNR:%3d\n", 
-                route->next_hop, rf95.lastRssi(), rf95.lastSNR());
-            Serial.print(buffer);
+            sprintf(buffer, "Rx:%d RSSI:%d\nSNR:%d Hop:%d Id:%d\n", from, rf95.lastRssi(), rf95.lastSNR(), route->next_hop, id);
+            // Serial.print(buffer);
+            printMsg(buffer, true);
 
             switch(p->msgType)
             {
                 case MESH_NET_MESSAGE_TYPE_PING_RESPONSE:
                 {
                     MeshNetPingMessage *a = (MeshNetPingMessage *)p;
-                    sprintf(buffer, "Ping RSP: power:%3d RSSI:%3d SNR:%3d\n", 
-                        a->power, a->rssi, a->snr);
-                    Serial.print(buffer);
+                    sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n",a->power, a->rssi, a->snr);
+                    // Serial.print(buffer);
+                    printMsg(buffer);
                     break;
                 }
                 case MESH_NET_MESSAGE_TYPE_PING_REQUEST:
+                {
+                    MeshNetPingMessage *a = (MeshNetPingMessage *)p;
                     msg.header.msgType = MESH_NET_MESSAGE_TYPE_PING_RESPONSE;
                     msg.power = power;
                     msg.rssi = rf95.lastRssi();
                     msg.snr = rf95.lastSNR();
 
-                    sprintf(buffer, "Ping REQ:%3d next hop:%3d RSSI:%3d SNR:%3d\n", 
-                        from, route->next_hop, rf95.lastRssi(), rf95.lastSNR());
-                    Serial.print(buffer);
+                    sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n", a->power, rf95.lastRssi(), rf95.lastSNR());
+                    // Serial.print(buffer);
+                    printMsg(buffer);
 
                     sendtoWaitStats((uint8_t*)&msg, sizeof(MeshNet::MeshNetPingMessage), from);
                     break;
-
+                }
                 default:
                     sprintf(buffer, "Unhandled:%3d\n", p->msgType);
                     Serial.print(buffer);
@@ -105,10 +140,6 @@ void MeshNet::loop(uint16_t wait_ms)
 uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uint8_t flags)
 {
 	blinkLed();
-	// Serial.println("outgoing");
-
-    // sprintf(buffer, "OUT:%02x %02x %02x %02x\n", *buf, *(buf+1), *(buf+2), *(buf+3));
-    // Serial.print(buffer);
 
 	uint8_t error = manager->sendtoWait(buf, len, address, flags);
 
@@ -121,10 +152,10 @@ uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uin
         case RH_ROUTER_ERROR_NONE:
         {
             RHRouter::RoutingTableEntry *route = manager->getRouteTo(address);
+            sprintf(buffer, "TxAck:%d RSSI:%d\nSNR:%d Hop:%d\n", address, rf95.lastRssi(), rf95.lastSNR(), route->next_hop);
+            // Serial.print(buffer);
+            printMsg(buffer);
 
-            sprintf(buffer, "Sent to:%3d next hop:%3d RSSI:%3d SNR:%3d\n", 
-                address, route->next_hop, rf95.lastRssi(), rf95.lastSNR());
-            Serial.print(buffer);
         }
         break;
     }
@@ -142,23 +173,6 @@ void MeshNet::pingNode(uint8_t address, uint8_t flags)
 	msg.power = power;
     
 	sendtoWaitStats((uint8_t*)&msg, sizeof(MeshNet::MeshNetPingMessage), address, flags);
-
-    // switch(error)
-    // {
-    //     case RH_ROUTER_ERROR_NO_ROUTE:
-    //         Serial.println("no route");
-    //         break;
-
-    //     case RH_ROUTER_ERROR_NONE:
-    //     {
-    //         RHRouter::RoutingTableEntry *route = manager->getRouteTo(address);
-
-    //         sprintf(buffer, "Sent to:%3d ACKed from:%3d RSSI:%3d SNR:%3d\n", 
-    //             address, route->next_hop, rf95.lastRssi(), rf95.lastSNR());
-    //         Serial.print(buffer);
-    //     }
-    //     break;
-    // }
 }
 
 void MeshNet::arpNode(uint8_t address)
