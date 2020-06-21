@@ -106,7 +106,7 @@ void setup()
   Serial.begin(9600);
 
   EEPROM.get(0, nodeInfo);
-  sprintf(buffer, "Node id: 0x%02X, Node type: 0x%02X\n", nodeInfo.nodeId, nodeInfo.nodeType);
+  sprintf(buffer, "Node id: %d, Node type: %d\n", nodeInfo.nodeId, nodeInfo.nodeType);
   Serial.print(buffer);
 
   nodeId = nodeInfo.nodeId; //XXXX
