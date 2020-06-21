@@ -5,8 +5,7 @@
 #include <MeshNet.h>
 
 #ifdef UseSD1306
-#define SD1306_Address 0x3C                       //define I2C address foe SD1306
-#define LCDI2C_Address 0x3F                       //define I2C address for PCF8574 LCD backpack, usually 0x27 or 0x3F
+#define SD1306_Address 0x3C                       //define I2C address for SD1306
 #include "SSD1306Ascii.h"                   //https://github.com/greiman/SSD1306Ascii
 #include "SSD1306AsciiWire.h"
 SSD1306AsciiWire disp;
@@ -79,8 +78,6 @@ void MeshNet::setup(uint8_t thisAddress, float freqMHz, int8_t power, uint16_t c
 //       Serial.println(F("set config failed"));
 //     }
 //   }
-
-
 }
 
 unsigned long previousMillis = 0; 
