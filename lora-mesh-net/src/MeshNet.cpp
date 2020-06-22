@@ -13,7 +13,7 @@ SSD1306AsciiWire disp;
 
 RH_RF95 MeshNet::rf95;
 
-MeshNet::MeshNetPingMessage msg;
+static char _tmpMessage[MESH_NET_MAX_MESSAGE_LEN];
 static char buffer[50];
 
 int freeMem()
@@ -32,6 +32,78 @@ void printMsg(const char * msg, bool clear=false)
     disp.print(msg);
 #endif
     Serial.print(msg);
+}
+
+void hexConv (const uint8_t * (& pStr), byte & b)
+{
+    b = *pStr++ - '0';
+    if (b > 9)
+        b -= 7;
+
+    // high-order nybble
+    b <<= 4;
+
+    byte b1 = *pStr++ - '0';
+    if (b1 > 9)
+        b1 -= 7;
+
+    b |= b1;
+}
+
+bool intelHexLine(const uint8_t *pLine)
+{
+    Serial.println((char *)pLine);
+    if(*pLine++ != ':')
+    {
+        return false;
+    }
+
+    const int maxHexData = 30;
+    byte hexBuffer [maxHexData];
+    int bytesInLine = 0;
+
+    // convert entire line from ASCII into binary
+    while (isxdigit (*pLine) && isxdigit (*(pLine+1)) )
+    {
+        // can't fit?
+        if (bytesInLine >= maxHexData)
+        {
+            Serial.println (F("Line too long to process."));
+            return false;
+        }
+
+        hexConv(pLine, hexBuffer[bytesInLine++]);
+    }
+
+    Serial.print("Bytes: ");
+    Serial.println(bytesInLine);
+
+    byte checksum = 0;
+    for (int i = 0; i < (bytesInLine); i++)
+    {
+        checksum += hexBuffer [i]; // sum them all, including the csum byte
+    }
+
+    // checksum should be zero
+    if (checksum == 0)
+    {
+        Serial.println (F("checksum OK"));
+
+        byte len = hexBuffer [0];
+        unsigned long addrH = hexBuffer [1];
+        unsigned long addrL = hexBuffer [2];
+        unsigned long addr = addrL | (addrH << 8);
+        byte recType = hexBuffer [3];
+
+        Serial.println(len);
+        Serial.println(addr, HEX);
+        Serial.println(recType);
+
+
+        return true;
+    }
+
+    return false;
 }
 
 void MeshNet::setup(uint8_t thisAddress, float freqMHz, int8_t power, uint16_t cad_timeout)
@@ -85,7 +157,7 @@ const long intervalMillis = 5000;
 
 void MeshNet::loop(uint16_t wait_ms)
 {
-	uint8_t len = sizeof(msg);
+	uint8_t len = sizeof(_tmpMessage);
 	uint8_t from;
     unsigned long currentMillis = millis();
 
@@ -98,11 +170,11 @@ void MeshNet::loop(uint16_t wait_ms)
 	uint8_t dest;
     uint8_t id;
 
-	if (manager->recvfromAckTimeout((uint8_t *)&msg, &len, wait_ms, &from, &dest, &id))
+	if (manager->recvfromAckTimeout((uint8_t *)&_tmpMessage, &len, wait_ms, &from, &dest, &id))
 	{
 		blinkLed();
 
-        MeshMessageHeader *p = (MeshMessageHeader *)&msg;
+        MeshMessageHeader *p = (MeshMessageHeader *)&_tmpMessage;
 
         if (len >= 1)
         {
@@ -117,28 +189,34 @@ void MeshNet::loop(uint16_t wait_ms)
                 {
                     MeshNetPingMessage *a = (MeshNetPingMessage *)p;
                     sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n",a->power, a->rssi, a->snr);
-                    // Serial.print(buffer);
                     printMsg(buffer);
                     break;
                 }
                 case MESH_NET_MESSAGE_TYPE_PING_REQUEST:
                 {
-                    MeshNetPingMessage *a = (MeshNetPingMessage *)p;
-                    msg.header.msgType = MESH_NET_MESSAGE_TYPE_PING_RESPONSE;
-                    msg.power = power;
-                    msg.rssi = rf95.lastRssi();
-                    msg.snr = rf95.lastSNR();
-
+                    MeshNetPingMessage *a;
+                    
+                    a = (MeshNetPingMessage *)p;
                     sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n", a->power, rf95.lastRssi(), rf95.lastSNR());
-                    // Serial.print(buffer);
                     printMsg(buffer);
 
-                    sendtoWaitStats((uint8_t*)&msg, sizeof(MeshNet::MeshNetPingMessage), from);
+                    a = (MeshNetPingMessage *)_tmpMessage;
+                    a->header.msgType = MESH_NET_MESSAGE_TYPE_PING_RESPONSE;
+                    a->power = power;
+                    a->rssi = rf95.lastRssi();
+                    a->snr = rf95.lastSNR();
+
+                    sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingMessage), from);
+                    break;
+                }
+                case MESH_NET_MESSAGE_TYPE_FOTA_REQUEST:
+                {
+                    MeshNetFOTAMessageReq *a = (MeshNetFOTAMessageReq *)p;
+                    handleFOTA(a);
                     break;
                 }
                 default:
-                    sprintf(buffer, "Unhandled:%3d\n", p->msgType);
-                    Serial.print(buffer);
+                    Serial.println("Unhandled: message");
                     break;
             }
         }
@@ -161,9 +239,7 @@ uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uin
         {
             RHRouter::RoutingTableEntry *route = manager->getRouteTo(address);
             sprintf(buffer, "TxAck:%d RSSI:%d\nSNR:%d Hop:%d\n", address, rf95.lastRssi(), rf95.lastSNR(), route->next_hop);
-            // Serial.print(buffer);
             printMsg(buffer);
-
         }
         break;
     }
@@ -173,14 +249,28 @@ uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uin
 
 void MeshNet::pingNode(uint8_t address, uint8_t flags)
 {
-	// uint8_t error;
-
-	memset(&msg, 0, sizeof(MeshNet::MeshNetPingMessage));
-
-    msg.header.msgType = MESH_NET_MESSAGE_TYPE_PING_REQUEST;
-	msg.power = power;
+    MeshNetPingMessage *a = (MeshNetPingMessage *)_tmpMessage;
+    a->header.msgType = MESH_NET_MESSAGE_TYPE_PING_REQUEST;
+	a->power = power;
     
-	sendtoWaitStats((uint8_t*)&msg, sizeof(MeshNet::MeshNetPingMessage), address, flags);
+	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetPingMessage), address, flags);
+}
+
+void MeshNet::sendFOTA(uint8_t address, char *buf)
+{
+    MeshNetFOTAMessageReq *a = (MeshNetFOTAMessageReq *)_tmpMessage;
+    a->header.msgType = MESH_NET_MESSAGE_TYPE_FOTA_REQUEST;
+	a->flags = 0;
+    memcpy(a->data, buf, strlen(buf));   
+	manager->sendtoWait((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetFOTAMessageReq), address);
+}
+
+void MeshNet::handleFOTA(MeshNetFOTAMessageReq *msg)
+{
+    if(intelHexLine(msg->data))
+    {
+
+    }
 }
 
 void MeshNet::arpNode(uint8_t address)
