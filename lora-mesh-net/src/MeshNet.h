@@ -6,6 +6,8 @@
 #define MESH_NET_MESSAGE_TYPE_ROUTE_FAILURE                  0
 #define MESH_NET_MESSAGE_TYPE_PING_REQUEST                   0x50
 #define MESH_NET_MESSAGE_TYPE_PING_RESPONSE                  0x51
+#define MESH_NET_MESSAGE_TYPE_FOTA_REQUEST                   0x52
+#define MESH_NET_MESSAGE_TYPE_FOTA_RESPONSE                  0x53
 
 class MeshNet
 {
@@ -33,11 +35,26 @@ public:
         int8_t              snr;     ///< SNR in Ping response
     } MeshNetPingMessage;
 
+    typedef struct
+    {
+        MeshMessageHeader   header; ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
+        uint8_t             flags;  ///< flags
+        uint8_t             data[MESH_NET_MAX_MESSAGE_LEN - 1]; ///< Intel Hex string
+    } MeshNetFOTAMessageReq;
+
+    typedef struct
+    {
+        MeshMessageHeader   header; ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
+        uint8_t             count;  ///< line count
+    } MeshNetFOTAMessageRsp;
+
     void setup(uint8_t thisAddress, float freqMHz, int8_t power, uint16_t cad_timeout);
 
     void loop(uint16_t wait_ms);
 
     void pingNode(uint8_t address, uint8_t flags = 0);
+
+    void sendFOTA(uint8_t address, char *buf);
 
     void arpNode(uint8_t address);
 
@@ -72,5 +89,6 @@ private:
 
     uint8_t sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t dest, uint8_t flags = 0);
 
+    void handleFOTA(MeshNetFOTAMessageReq *msg);
 };
 #endif
