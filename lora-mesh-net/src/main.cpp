@@ -24,7 +24,7 @@ struct nodeInfo
   uint8_t RFU2;
 } nodeInfo;
 
-const byte numChars = 32;
+const byte numChars = 64;
 char buffer[numChars];   // an array to store the received data
 bool newData = false;
 bool serialData = false;
@@ -63,40 +63,45 @@ void handleData() {
 
     switch(buffer[0])
     {
-      case 'N':
-        nodeInfo.nodeId = atoi(&buffer[1]);
-        sprintf(buffer, "Node id: 0x%02X\n", nodeInfo.nodeId);
-        Serial.print(buffer);
-        break;
+        case 'N':
+            nodeInfo.nodeId = atoi(&buffer[1]);
+            sprintf(buffer, "Node id: %d\n", nodeInfo.nodeId);
+            Serial.print(buffer);
+            break;
 
-      case 'T':
-        nodeInfo.nodeType = atoi(&buffer[1]);
-        sprintf(buffer, "Node type: 0x%02X\n", nodeInfo.nodeType);
-        Serial.print(buffer);
-        break;
+        case 'T':
+            nodeInfo.nodeType = atoi(&buffer[1]);
+            sprintf(buffer, "Node type: %d\n", nodeInfo.nodeType);
+            Serial.print(buffer);
+            break;
 
-      case 'W':
-        EEPROM.put(0, nodeInfo);
-        break;
+        case 'W':
+            EEPROM.put(0, nodeInfo);
+            break;
 
-      case 'P':
-        nodeId = atoi(&buffer[1]);
-        sprintf(buffer, "Ping Node id: 0x%02X\n", nodeId);
-        Serial.print(buffer);
-        // mesh.pingNode(nodeId);
-        mesh.ping = nodeId;
-        break;
+        case 'P':
+            nodeId = atoi(&buffer[1]);
+            sprintf(buffer, "Ping Node id: %d\n", nodeId);
+            Serial.print(buffer);
+            // mesh.pingNode(nodeId);
+            mesh.ping = nodeId;
+            break;
 
-      case 'A':
-        nodeId = atoi(&buffer[1]);
-        sprintf(buffer, "ARP Node id: 0x%02X\n", nodeId);
-        Serial.print(buffer);
-        mesh.arpNode(nodeId);
-        break;
+        case 'A':
+            nodeId = atoi(&buffer[1]);
+            sprintf(buffer, "ARP Node id: %d\n", nodeId);
+            Serial.print(buffer);
+            mesh.arpNode(nodeId);
+            break;
 
-      case 'R':
-        mesh.printRoutingTable();
-        break;
+        case 'R':
+            mesh.printRoutingTable();
+            break;
+
+        case 'F':
+            nodeId = atoi(&buffer[1]);
+            mesh.sendFOTA(nodeId, strchr(buffer, ':'));
+            break;
     }
   }
 }
