@@ -27,6 +27,12 @@
         },
         {
             "path": "lora-mesh-net"
+        },
+        {
+            "path": "../arduino_sketches/Atmega_Hex_Uploader"
+        },
+        {
+            "path": "../RFM69"
         }
     ],
     "settings": {}
