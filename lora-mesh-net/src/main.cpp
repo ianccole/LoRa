@@ -29,8 +29,6 @@ char buffer[numChars];   // an array to store the received data
 bool newData = false;
 bool serialData = false;
 
-uint8_t nodeId = 0;
-
 MeshNet mesh;
 
 void recvWithEndMarker() {
@@ -80,41 +78,48 @@ void handleData() {
             break;
 
         case 'P':
-            nodeId = atoi(&buffer[1]);
+        {
+            uint8_t nodeId = atoi(&buffer[1]);
             sprintf(buffer, "Ping Node id: %d\n", nodeId);
             Serial.print(buffer);
             // mesh.pingNode(nodeId);
             mesh.ping = nodeId;
             break;
-
-        case 'A':
-            nodeId = atoi(&buffer[1]);
-            sprintf(buffer, "ARP Node id: %d\n", nodeId);
-            Serial.print(buffer);
-            mesh.arpNode(nodeId);
-            break;
+        }
 
         case 'R':
             mesh.printRoutingTable();
             break;
 
+        // F node,seq,:100030000C94AD000C94AD000C94AD000C94AD008C
         case 'F':
-            nodeId = atoi(&buffer[1]);
-            mesh.sendFOTA(nodeId, strchr(buffer, ':'));
+        {   
+            char *s;
+            uint8_t nodeId;
+            uint8_t seqnum;
+            s = strtok(&buffer[1], " ");
+            nodeId = atoi(s);
+            // Serial.println(nodeId, DEC);
+            s = strtok(NULL, " ");
+            seqnum = atoi(s);
+            // Serial.println(seqnum, DEC);
+            s = strtok(NULL, " ");
+            // Serial.println(s);
+            mesh.sendFOTA(nodeId, seqnum, s);
             break;
+        }
     }
   }
 }
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(57600);
 
   EEPROM.get(0, nodeInfo);
   sprintf(buffer, "Node id: %d, Node type: %d\n", nodeInfo.nodeId, nodeInfo.nodeType);
   Serial.print(buffer);
 
-  nodeId = nodeInfo.nodeId; //XXXX
   mesh.setup(nodeInfo.nodeId, FREQMHZ, POWER, CAD_TIMEOUT);
 }
 
