@@ -177,7 +177,6 @@ void MeshNet::loop(uint16_t wait_ms)
                 case MESH_NET_MESSAGE_TYPE_FOTA_RESPONSE:
                 {
                     MeshNetFOTAMessageRsp *a = (MeshNetFOTAMessageRsp *)p;
-
                     sprintf(buffer, "%s for SEQ:%d,%d\n", flags?"NAK":"ACK", a->sequence,flags);
                     printMsg(buffer);
                     break;
