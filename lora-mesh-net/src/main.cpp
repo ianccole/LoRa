@@ -91,7 +91,7 @@ void handleData() {
             mesh.printRoutingTable();
             break;
 
-        // F node,seq,:100030000C94AD000C94AD000C94AD000C94AD008C
+        // F node seq :100030000C94AD000C94AD000C94AD000C94AD008C
         case 'F':
         {   
             char *s;
