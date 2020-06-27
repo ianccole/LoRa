@@ -9,6 +9,8 @@
 #define MESH_NET_MESSAGE_TYPE_FOTA_REQUEST                   0x52
 #define MESH_NET_MESSAGE_TYPE_FOTA_RESPONSE                  0x53
 
+#define seconds() (millis()/1000)
+
 class MeshNet
 {
 public:
@@ -38,15 +40,20 @@ public:
     typedef struct
     {
         MeshMessageHeader   header; ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
-        uint8_t             flags;  ///< flags
+        uint8_t             sequence;
         uint8_t             data[MESH_NET_MAX_MESSAGE_LEN - 1]; ///< Intel Hex string
     } MeshNetFOTAMessageReq;
 
     typedef struct
     {
         MeshMessageHeader   header; ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
-        uint8_t             count;  ///< line count
+        uint8_t             sequence;
     } MeshNetFOTAMessageRsp;
+
+    /// Constructor.
+    /// \param[in] driver The RadioHead driver to use to transport messages.
+    /// \param[in] thisAddress The address to assign to this node. Defaults to 0
+    MeshNet(void);
 
     void setup(uint8_t thisAddress, float freqMHz, int8_t power, uint16_t cad_timeout);
 
@@ -54,9 +61,7 @@ public:
 
     void pingNode(uint8_t address, uint8_t flags = 0);
 
-    void sendFOTA(uint8_t address, char *buf);
-
-    void arpNode(uint8_t address);
+    void sendFOTA(uint8_t address, uint8_t seqnum, char *buf);
 
     int16_t lastRssi()
     {
@@ -80,7 +85,14 @@ public:
     uint8_t ping;
 
 private:
+    uint8_t previousSeconds;
+    const uint8_t pingInterval = 5;
+    const uint8_t fotaInterval = 15;
+    uint8_t pingTimeout;
+    uint8_t fotaTimeout;
+    uint32_t flashIndex;
     int8_t power;
+    bool fotaActive;
     // Singleton instance of the radio driver
     static RH_RF95 rf95;
 
@@ -88,7 +100,7 @@ private:
     RHMesh *manager;
 
     uint8_t sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t dest, uint8_t flags = 0);
-
+    bool burnHexLine(const uint8_t *pLine);
     void handleFOTA(MeshNetFOTAMessageReq *msg);
 };
 #endif
