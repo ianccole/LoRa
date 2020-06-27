@@ -177,16 +177,9 @@ void MeshNet::loop(uint16_t wait_ms)
                 case MESH_NET_MESSAGE_TYPE_FOTA_RESPONSE:
                 {
                     MeshNetFOTAMessageRsp *a = (MeshNetFOTAMessageRsp *)p;
-                    if(flags == 0x00)
-                    {
-                        sprintf(buffer, "ACK for SEQ:%d\n", a->sequence);
-                        printMsg(buffer);
-                    }
-                    else
-                    {
-                        sprintf(buffer, "NAK for SEQ:%d,%d\n", a->sequence,flags);
-                        printMsg(buffer);
-                    }
+
+                    sprintf(buffer, "%s for SEQ:%d,%d\n", flags?"NAK":"ACK", a->sequence,flags);
+                    printMsg(buffer);
                     break;
                 }
                 default:
