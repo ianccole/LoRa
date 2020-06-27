@@ -11,6 +11,9 @@
 SSD1306AsciiWire disp;
 #endif
 
+#include <SPIFlash.h>
+SPIFlash flash(SS_FLASHMEM);
+
 RH_RF95 MeshNet::rf95;
 
 static char _tmpMessage[MESH_NET_MAX_MESSAGE_LEN];
@@ -50,60 +53,12 @@ void hexConv (const uint8_t * (& pStr), byte & b)
     b |= b1;
 }
 
-bool intelHexLine(const uint8_t *pLine)
+
+////////////////////////////////////////////////////////////////////
+// Constructors
+MeshNet::MeshNet(void)
+    : fotaTimeout(0), fotaActive(false)
 {
-    Serial.println((char *)pLine);
-    if(*pLine++ != ':')
-    {
-        return false;
-    }
-
-    const int maxHexData = 30;
-    byte hexBuffer [maxHexData];
-    int bytesInLine = 0;
-
-    // convert entire line from ASCII into binary
-    while (isxdigit (*pLine) && isxdigit (*(pLine+1)) )
-    {
-        // can't fit?
-        if (bytesInLine >= maxHexData)
-        {
-            Serial.println (F("Line too long to process."));
-            return false;
-        }
-
-        hexConv(pLine, hexBuffer[bytesInLine++]);
-    }
-
-    Serial.print("Bytes: ");
-    Serial.println(bytesInLine);
-
-    byte checksum = 0;
-    for (int i = 0; i < (bytesInLine); i++)
-    {
-        checksum += hexBuffer [i]; // sum them all, including the csum byte
-    }
-
-    // checksum should be zero
-    if (checksum == 0)
-    {
-        Serial.println (F("checksum OK"));
-
-        byte len = hexBuffer [0];
-        unsigned long addrH = hexBuffer [1];
-        unsigned long addrL = hexBuffer [2];
-        unsigned long addr = addrL | (addrH << 8);
-        byte recType = hexBuffer [3];
-
-        Serial.println(len);
-        Serial.println(addr, HEX);
-        Serial.println(recType);
-
-
-        return true;
-    }
-
-    return false;
 }
 
 void MeshNet::setup(uint8_t thisAddress, float freqMHz, int8_t power, uint16_t cad_timeout)
@@ -152,21 +107,24 @@ void MeshNet::setup(uint8_t thisAddress, float freqMHz, int8_t power, uint16_t c
 //   }
 }
 
-unsigned long previousMillis = 0; 
-const long intervalMillis = 5000;
-
 void MeshNet::loop(uint16_t wait_ms)
 {
 	uint8_t len = sizeof(_tmpMessage);
 	uint8_t from;
-    unsigned long currentMillis = millis();
+    uint8_t currentSeconds = seconds();
 
-    if(ping && currentMillis - previousMillis >= intervalMillis)
+    if(ping && currentSeconds - pingTimeout >= pingInterval)
     {
-        previousMillis = currentMillis;
-        
+        pingTimeout = currentSeconds;
         pingNode(ping);
     }
+
+    if(fotaActive && currentSeconds - fotaTimeout >= fotaInterval)
+    {
+        fotaActive = false;
+        Serial.println("FOTA timeout");
+    }
+
 	uint8_t dest;
     uint8_t id;
 
@@ -256,24 +214,99 @@ void MeshNet::pingNode(uint8_t address, uint8_t flags)
 	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetPingMessage), address, flags);
 }
 
-void MeshNet::sendFOTA(uint8_t address, char *buf)
+void MeshNet::sendFOTA(uint8_t address, uint8_t seqnum, char *buf)
 {
     MeshNetFOTAMessageReq *a = (MeshNetFOTAMessageReq *)_tmpMessage;
     a->header.msgType = MESH_NET_MESSAGE_TYPE_FOTA_REQUEST;
-	a->flags = 0;
+	a->sequence = seqnum;
     memcpy(a->data, buf, strlen(buf));   
 	manager->sendtoWait((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetFOTAMessageReq), address);
 }
 
 void MeshNet::handleFOTA(MeshNetFOTAMessageReq *msg)
 {
-    if(intelHexLine(msg->data))
+    if (msg->sequence == 0)
     {
-
+        Serial.print("Erasing Flash chip ... ");
+        flash.blockErase32K(0);
+        while(flash.busy());
+        Serial.println("DONE");        
+        fotaActive = true;
+        fotaTimeout = seconds();
+        // Flash should start with:
+        // FLXIMG:LL:
+        // LL = 16 bit length,big endian. 
+        // hex data begins at offset 10
+        //flash.writeBytes(0,"FLXIMG:", 7);
+        flashIndex = 10; // reserve space for flash header
+    }
+    if(fotaActive)
+    {
+        if(burnHexLine(msg->data))
+        {
+            // ack
+        }
+        else
+        {
+            // nak
+            fotaActive = false;
+        }
     }
 }
 
-void MeshNet::arpNode(uint8_t address)
+bool MeshNet::burnHexLine(const uint8_t *pLine)
 {
-    manager->doArp(address);
+    Serial.println((char *)pLine);
+    if(*pLine++ != ':')
+    {
+        return false;
+    }
+
+    const int maxHexData = 30;
+    byte hexBuffer [maxHexData];
+    int bytesInLine = 0;
+
+    // convert entire line from ASCII into binary
+    while (isxdigit (*pLine) && isxdigit (*(pLine+1)) )
+    {
+        // can't fit?
+        if (bytesInLine >= maxHexData)
+        {
+            Serial.println (F("Line too long to process."));
+            return false;
+        }
+
+        hexConv(pLine, hexBuffer[bytesInLine++]);
+    }
+
+    Serial.print("Bytes: ");
+    Serial.println(bytesInLine);
+
+    byte checksum = 0;
+    for (int i = 0; i < (bytesInLine); i++)
+    {
+        checksum += hexBuffer [i]; // sum them all, including the csum byte
+    }
+
+    // checksum should be zero
+    if (checksum == 0)
+    {
+        Serial.println (F("checksum OK"));
+
+        byte len = hexBuffer [0];
+        unsigned long addrH = hexBuffer [1];
+        unsigned long addrL = hexBuffer [2];
+        unsigned long addr = addrL | (addrH << 8);
+        byte recType = hexBuffer [3];
+
+        Serial.println(len);
+        Serial.println(addr, HEX);
+        Serial.println(recType);
+
+        flash.writeBytes(flashIndex, (void*)(&hexBuffer[3]), len);
+        flashIndex += len;
+        return true;
+    }
+
+    return false;
 }
