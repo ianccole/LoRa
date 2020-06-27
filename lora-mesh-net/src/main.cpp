@@ -105,7 +105,7 @@ void handleData() {
             // Serial.println(seqnum, DEC);
             s = strtok(NULL, " ");
             // Serial.println(s);
-            mesh.sendFOTA(nodeId, seqnum, s);
+            mesh.sendFOTAREQ(nodeId, seqnum, s);
             break;
         }
     }

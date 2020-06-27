@@ -127,8 +127,9 @@ void MeshNet::loop(uint16_t wait_ms)
 
 	uint8_t dest;
     uint8_t id;
+    uint8_t flags;
 
-	if (manager->recvfromAckTimeout((uint8_t *)&_tmpMessage, &len, wait_ms, &from, &dest, &id))
+	if (manager->recvfromAckTimeout((uint8_t *)&_tmpMessage, &len, wait_ms, &from, &dest, &id, &flags))
 	{
 		blinkLed();
 
@@ -170,7 +171,22 @@ void MeshNet::loop(uint16_t wait_ms)
                 case MESH_NET_MESSAGE_TYPE_FOTA_REQUEST:
                 {
                     MeshNetFOTAMessageReq *a = (MeshNetFOTAMessageReq *)p;
-                    handleFOTA(a);
+                    handleFOTA(a, from);
+                    break;
+                }
+                case MESH_NET_MESSAGE_TYPE_FOTA_RESPONSE:
+                {
+                    MeshNetFOTAMessageRsp *a = (MeshNetFOTAMessageRsp *)p;
+                    if(flags == 0x00)
+                    {
+                        sprintf(buffer, "ACK for SEQ:%d\n", a->sequence);
+                        printMsg(buffer);
+                    }
+                    else
+                    {
+                        sprintf(buffer, "NAK for SEQ:%d,%d\n", a->sequence,flags);
+                        printMsg(buffer);
+                    }
                     break;
                 }
                 default:
@@ -214,7 +230,7 @@ void MeshNet::pingNode(uint8_t address, uint8_t flags)
 	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetPingMessage), address, flags);
 }
 
-void MeshNet::sendFOTA(uint8_t address, uint8_t seqnum, char *buf)
+void MeshNet::sendFOTAREQ(uint8_t address, uint8_t seqnum, char *buf)
 {
     MeshNetFOTAMessageReq *a = (MeshNetFOTAMessageReq *)_tmpMessage;
     a->header.msgType = MESH_NET_MESSAGE_TYPE_FOTA_REQUEST;
@@ -223,7 +239,15 @@ void MeshNet::sendFOTA(uint8_t address, uint8_t seqnum, char *buf)
 	manager->sendtoWait((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetFOTAMessageReq), address);
 }
 
-void MeshNet::handleFOTA(MeshNetFOTAMessageReq *msg)
+void MeshNet::sendFOTARSP(uint8_t address, uint8_t seqnum, uint8_t flags)
+{
+    MeshNetFOTAMessageReq *a = (MeshNetFOTAMessageReq *)_tmpMessage;
+    a->header.msgType = MESH_NET_MESSAGE_TYPE_FOTA_RESPONSE;
+	a->sequence = seqnum;
+	manager->sendtoWait((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetFOTAMessageReq), address, flags);
+}
+
+void MeshNet::handleFOTA(MeshNetFOTAMessageReq *msg, uint8_t from)
 {
     if (msg->sequence == 0)
     {
@@ -245,12 +269,19 @@ void MeshNet::handleFOTA(MeshNetFOTAMessageReq *msg)
         if(burnHexLine(msg->data))
         {
             // ack
+            sendFOTARSP(from, msg->sequence, 0x00);
         }
         else
         {
             // nak
             fotaActive = false;
+            sendFOTARSP(from, msg->sequence, 0x01);
         }
+    }
+    else
+    {
+        // nak not started
+        sendFOTARSP(from, msg->sequence, 0x02);
     }
 }
 

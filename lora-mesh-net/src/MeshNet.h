@@ -61,7 +61,8 @@ public:
 
     void pingNode(uint8_t address, uint8_t flags = 0);
 
-    void sendFOTA(uint8_t address, uint8_t seqnum, char *buf);
+    void sendFOTAREQ(uint8_t address, uint8_t seqnum, char *buf);
+    void sendFOTARSP(uint8_t address, uint8_t seqnum, uint8_t flags);
 
     int16_t lastRssi()
     {
@@ -101,6 +102,6 @@ private:
 
     uint8_t sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t dest, uint8_t flags = 0);
     bool burnHexLine(const uint8_t *pLine);
-    void handleFOTA(MeshNetFOTAMessageReq *msg);
+    void handleFOTA(MeshNetFOTAMessageReq *msg, uint8_t from);
 };
 #endif
