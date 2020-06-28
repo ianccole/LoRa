@@ -4,6 +4,8 @@
 #include <RH_RF95.h>
 #include <MeshNet.h>
 
+#define FLASHHDRLEN (10)
+
 #ifdef UseSD1306
 #define SD1306_Address 0x3C                       //define I2C address for SD1306
 #include "SSD1306Ascii.h"                   //https://github.com/greiman/SSD1306Ascii
@@ -53,6 +55,26 @@ void hexConv (const uint8_t * (& pStr), byte & b)
     b |= b1;
 }
 
+void resetUsingWatchdog()
+{
+#ifdef __AVR__
+  //wdt_disable();
+  Serial.print(F("REBOOTING"));
+  wdt_enable(WDTO_15MS);
+  while(1) 
+    Serial.print(F("."));
+#elif defined(MOTEINO_M0)
+  //WDT->CTRL.reg = 0; // disable watchdog
+  //while (WDT->STATUS.bit.SYNCBUSY == 1); // sync is required
+  //WDT->CONFIG.reg = 0; // see Table 18.8.2 Timeout Period (valid values 0-11)
+  //WDT->CTRL.reg = WDT_CTRL_ENABLE; //enable WDT
+  //while (WDT->STATUS.bit.SYNCBUSY == 1);
+  //WDT->CLEAR.reg= 0x00; // system reset via WDT
+  //while (WDT->STATUS.bit.SYNCBUSY == 1);
+  *((volatile uint32_t *)(HMCRAMC0_ADDR + HMCRAMC0_SIZE - 4)) = 0xF1A507AF;
+  NVIC_SystemReset();
+#endif
+}
 
 ////////////////////////////////////////////////////////////////////
 // Constructors
@@ -249,12 +271,7 @@ void MeshNet::handleFOTA(MeshNetFOTAMessageReq *msg, uint8_t from)
         Serial.println("DONE");        
         fotaActive = true;
         fotaTimeout = seconds();
-        // Flash should start with:
-        // FLXIMG:LL:
-        // LL = 16 bit length,big endian. 
-        // hex data begins at offset 10
-        //flash.writeBytes(0,"FLXIMG:", 7);
-        flashIndex = 10; // reserve space for flash header
+        flashIndex = FLASHHDRLEN; // reserve space for flash header
     }
     if(fotaActive)
     {
@@ -326,8 +343,34 @@ bool MeshNet::burnHexLine(const uint8_t *pLine)
         Serial.println(addr, HEX);
         Serial.println(recType);
 
-        flash.writeBytes(flashIndex, (void*)(&hexBuffer[3]), len);
-        flashIndex += len;
+        switch(recType)
+        {
+            case 0:
+                flash.writeBytes(flashIndex, (void*)(&hexBuffer[4]), len);
+                flashIndex += len;
+                break;
+
+            case 1:
+                /*
+                +0-------------------1--------------
+                |0|1|2|3|4|5|6|7|8|9|0|1..
+                +------------------------------------
+                |F|L|X|I|M|G|:|N|N|:|x|x|x|...
+                +------------------------------------
+                */
+
+                // write header
+                flash.writeBytes(0,"FLXIMG:", 7);
+
+                // write length
+                flashIndex -= FLASHHDRLEN;
+                flash.writeByte(7, flashIndex >> 8);
+                flash.writeByte(8, flashIndex & 0xff);
+                flash.writeByte(9, ':');
+
+                resetUsingWatchdog();
+            break;
+        }
         return true;
     }
 
