@@ -90,7 +90,7 @@ void handleData() {
         case 'R':
             mesh.printRoutingTable();
             break;
-
+#ifdef DO_FOTA
         // F node seq :100030000C94AD000C94AD000C94AD000C94AD008C
         case 'F':
         {   
@@ -109,6 +109,7 @@ void handleData() {
             mesh.sendFOTAREQ(nodeId, seqnum, s);
             break;
         }
+#endif
     }
   }
 }

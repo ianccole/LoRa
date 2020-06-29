@@ -14,8 +14,10 @@
 SSD1306AsciiWire disp;
 #endif
 
+#ifdef DO_FOTA
 #include <SPIFlash.h>
 SPIFlash flash(SS_FLASHMEM);
+#endif
 
 RH_RF95 MeshNet::rf95;
 
@@ -40,6 +42,7 @@ void printMsg(const char * msg, bool clear=false)
     Serial.print(msg);
 }
 
+#ifdef DO_FOTA
 void hexConv (const uint8_t * (& pStr), byte & b)
 {
     b = *pStr++ - '0';
@@ -76,6 +79,7 @@ void resetUsingWatchdog()
   NVIC_SystemReset();
 #endif
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////
 // Constructors
@@ -141,13 +145,13 @@ void MeshNet::loop(uint16_t wait_ms)
         pingTimeout = currentSeconds;
         pingNode(ping);
     }
-
+#ifdef DO_FOTA
     if(fotaActive && currentSeconds - fotaTimeout >= fotaInterval)
     {
         fotaActive = false;
         Serial.println("FOTA timeout");
     }
-
+#endif
 	uint8_t dest;
     uint8_t id;
     uint8_t flags;
@@ -191,6 +195,7 @@ void MeshNet::loop(uint16_t wait_ms)
                     sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingMessage), from);
                     break;
                 }
+#ifdef DO_FOTA
                 case MESH_NET_MESSAGE_TYPE_FOTA_REQUEST:
                 {
                     MeshNetFOTAMessageReq *a = (MeshNetFOTAMessageReq *)p;
@@ -205,6 +210,7 @@ void MeshNet::loop(uint16_t wait_ms)
                     printMsg(buffer);
                     break;
                 }
+#endif
                 default:
                     Serial.println("Unhandled: message");
                     break;
@@ -245,7 +251,7 @@ void MeshNet::pingNode(uint8_t address, uint8_t flags)
     
 	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetPingMessage), address, flags);
 }
-
+#ifdef DO_FOTA
 void MeshNet::sendFOTAREQ(uint8_t address, uint16_t seqnum, char *buf)
 {
     MeshNetFOTAMessageReq *a = (MeshNetFOTAMessageReq *)_tmpMessage;
@@ -388,3 +394,4 @@ bool MeshNet::burnHexLine(const uint8_t *pLine)
 
     return false;
 }
+#endif
