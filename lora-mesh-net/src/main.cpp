@@ -96,7 +96,7 @@ void handleData() {
         {   
             char *s;
             uint8_t nodeId;
-            uint8_t seqnum;
+            uint16_t seqnum;
             s = strtok(&buffer[1], " ");
             nodeId = atoi(s);
             // Serial.println(nodeId, DEC);
@@ -105,6 +105,7 @@ void handleData() {
             // Serial.println(seqnum, DEC);
             s = strtok(NULL, " ");
             // Serial.println(s);
+            s[strlen(s)] = '\0';
             mesh.sendFOTAREQ(nodeId, seqnum, s);
             break;
         }
