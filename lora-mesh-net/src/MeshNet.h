@@ -37,17 +37,23 @@ public:
         int8_t              snr;     ///< SNR in Ping response
     } MeshNetPingMessage;
 
+    typedef struct 
+    {
+        uint16_t            sequence;
+    } MeshFOTAHeader;
+
     typedef struct
     {
         MeshMessageHeader   header; ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
-        uint8_t             sequence;
-        uint8_t             data[MESH_NET_MAX_MESSAGE_LEN - 1]; ///< Intel Hex string
+        MeshFOTAHeader      headerFOTA;
+        uint8_t             data[MESH_NET_MAX_MESSAGE_LEN - sizeof(MeshMessageHeader) - sizeof(MeshFOTAHeader)]; ///< Intel Hex string
     } MeshNetFOTAMessageReq;
 
     typedef struct
     {
         MeshMessageHeader   header; ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
-        uint8_t             sequence;
+        MeshFOTAHeader      headerFOTA;
+        uint16_t            sequence;
     } MeshNetFOTAMessageRsp;
 
     /// Constructor.
@@ -61,8 +67,8 @@ public:
 
     void pingNode(uint8_t address, uint8_t flags = 0);
 
-    void sendFOTAREQ(uint8_t address, uint8_t seqnum, char *buf);
-    void sendFOTARSP(uint8_t address, uint8_t seqnum, uint8_t flags);
+    void sendFOTAREQ(uint8_t address, uint16_t seqnum, char *buf);
+    void sendFOTARSP(uint8_t address, uint16_t seqnum, uint8_t flags);
 
     int16_t lastRssi()
     {
