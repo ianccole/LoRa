@@ -31,7 +31,8 @@ def loadHex(args):
             fota = 'F %s %s %s\n' %(args.node, seq, line.strip())
             client.write(fota)
             ii = client.expect(['ACK', 'NAK'])
-            print(client.before.strip(),client.after.strip())
+            print(client.before.strip())
+            print(client.after.strip())
             if ii == 1:
                 break
             seq += 1
