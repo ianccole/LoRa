@@ -3,6 +3,7 @@
 #include <RHMesh.h>
 #include <RH_RF95.h>
 #include <MeshNet.h>
+#include <avr/wdt.h>
 
 #define FLASHHDRLEN (10)
 
@@ -160,7 +161,7 @@ void MeshNet::loop(uint16_t wait_ms)
         if (len >= 1)
         {
             RHRouter::RoutingTableEntry *route = manager->getRouteTo(from);
-            sprintf(buffer, "Rx:%d RSSI:%d\nSNR:%d Hop:%d Id:%d\n", from, rf95.lastRssi(), rf95.lastSNR(), route->next_hop, id);
+            sprintf(buffer, "Rx:%d RSSI:%d\nSNR:%d Hop:%d Id:%d len:%d\n", from, rf95.lastRssi(), rf95.lastSNR(), route->next_hop, id, len);
             // Serial.print(buffer);
             printMsg(buffer, true);
 
@@ -193,13 +194,14 @@ void MeshNet::loop(uint16_t wait_ms)
                 case MESH_NET_MESSAGE_TYPE_FOTA_REQUEST:
                 {
                     MeshNetFOTAMessageReq *a = (MeshNetFOTAMessageReq *)p;
+                    a->data[len - (sizeof(MeshMessageHeader) + sizeof(MeshFOTAHeader))] = '\0';
                     handleFOTA(a, from);
                     break;
                 }
                 case MESH_NET_MESSAGE_TYPE_FOTA_RESPONSE:
                 {
                     MeshNetFOTAMessageRsp *a = (MeshNetFOTAMessageRsp *)p;
-                    sprintf(buffer, "%s for SEQ:%d,%d\n", flags?"NAK":"ACK", a->sequence,flags);
+                    sprintf(buffer, "%s for SEQ:%d,%d\n", flags?"NAK":"ACK", a->headerFOTA.sequence,flags);
                     printMsg(buffer);
                     break;
                 }
@@ -244,26 +246,28 @@ void MeshNet::pingNode(uint8_t address, uint8_t flags)
 	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetPingMessage), address, flags);
 }
 
-void MeshNet::sendFOTAREQ(uint8_t address, uint8_t seqnum, char *buf)
+void MeshNet::sendFOTAREQ(uint8_t address, uint16_t seqnum, char *buf)
 {
     MeshNetFOTAMessageReq *a = (MeshNetFOTAMessageReq *)_tmpMessage;
     a->header.msgType = MESH_NET_MESSAGE_TYPE_FOTA_REQUEST;
-	a->sequence = seqnum;
+	a->headerFOTA.sequence = seqnum;
+    uint8_t len = strlen(buf) + sizeof(MeshMessageHeader) + sizeof(MeshFOTAHeader);
     memcpy(a->data, buf, strlen(buf));   
-	manager->sendtoWait((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetFOTAMessageReq), address);
+	manager->sendtoWait((uint8_t*)&_tmpMessage, len, address);
 }
 
-void MeshNet::sendFOTARSP(uint8_t address, uint8_t seqnum, uint8_t flags)
+void MeshNet::sendFOTARSP(uint8_t address, uint16_t seqnum, uint8_t flags)
 {
     MeshNetFOTAMessageReq *a = (MeshNetFOTAMessageReq *)_tmpMessage;
     a->header.msgType = MESH_NET_MESSAGE_TYPE_FOTA_RESPONSE;
-	a->sequence = seqnum;
-	manager->sendtoWait((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetFOTAMessageReq), address, flags);
+	a->headerFOTA.sequence = seqnum;
+    uint8_t len = sizeof(MeshMessageHeader) + sizeof(MeshFOTAHeader);
+	manager->sendtoWait((uint8_t*)&_tmpMessage, len, address, flags);
 }
 
 void MeshNet::handleFOTA(MeshNetFOTAMessageReq *msg, uint8_t from)
 {
-    if (msg->sequence == 0)
+    if (msg->headerFOTA.sequence == 0)
     {
         Serial.print("Erasing Flash chip ... ");
         flash.blockErase32K(0);
@@ -278,19 +282,25 @@ void MeshNet::handleFOTA(MeshNetFOTAMessageReq *msg, uint8_t from)
         if(burnHexLine(msg->data))
         {
             // ack
-            sendFOTARSP(from, msg->sequence, 0x00);
+            sendFOTARSP(from, msg->headerFOTA.sequence, 0x00);
+            fotaTimeout = seconds();
+
+            if(fotaActive == false)
+            {
+                resetUsingWatchdog();
+            }
         }
         else
         {
             // nak
             fotaActive = false;
-            sendFOTARSP(from, msg->sequence, 0x01);
+            sendFOTARSP(from, msg->headerFOTA.sequence, 0x01);
         }
     }
     else
     {
         // nak not started
-        sendFOTARSP(from, msg->sequence, 0x02);
+        sendFOTARSP(from, msg->headerFOTA.sequence, 0x02);
     }
 }
 
@@ -334,14 +344,14 @@ bool MeshNet::burnHexLine(const uint8_t *pLine)
         Serial.println (F("checksum OK"));
 
         byte len = hexBuffer [0];
-        unsigned long addrH = hexBuffer [1];
-        unsigned long addrL = hexBuffer [2];
-        unsigned long addr = addrL | (addrH << 8);
+        // unsigned long addrH = hexBuffer [1];
+        // unsigned long addrL = hexBuffer [2];
+        // unsigned long addr = addrL | (addrH << 8);
         byte recType = hexBuffer [3];
 
-        Serial.println(len);
-        Serial.println(addr, HEX);
-        Serial.println(recType);
+        // Serial.println(len);
+        // Serial.println(addr, HEX);
+        // Serial.println(recType);
 
         switch(recType)
         {
@@ -368,7 +378,9 @@ bool MeshNet::burnHexLine(const uint8_t *pLine)
                 flash.writeByte(8, flashIndex & 0xff);
                 flash.writeByte(9, ':');
 
-                resetUsingWatchdog();
+                // indicate we are ready to reboot
+                fotaActive = false;
+
             break;
         }
         return true;
