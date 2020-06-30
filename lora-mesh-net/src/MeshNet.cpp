@@ -14,7 +14,7 @@
 SSD1306AsciiWire disp;
 #endif
 
-#ifdef DO_FOTA
+#ifdef UsesSPIFLASH
 #include <SPIFlash.h>
 SPIFlash flash(SS_FLASHMEM);
 #endif
@@ -42,7 +42,7 @@ void printMsg(const char * msg, bool clear=false)
     Serial.print(msg);
 }
 
-#ifdef DO_FOTA
+#ifdef UsesSPIFLASH
 void hexConv (const uint8_t * (& pStr), byte & b)
 {
     b = *pStr++ - '0';
@@ -145,7 +145,7 @@ void MeshNet::loop(uint16_t wait_ms)
         pingTimeout = currentSeconds;
         pingNode(ping);
     }
-#ifdef DO_FOTA
+#ifdef UsesSPIFLASH
     if(fotaActive && currentSeconds - fotaTimeout >= fotaInterval)
     {
         fotaActive = false;
@@ -195,7 +195,8 @@ void MeshNet::loop(uint16_t wait_ms)
                     sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingMessage), from);
                     break;
                 }
-#ifdef DO_FOTA
+
+#ifdef UsesSPIFLASH
                 case MESH_NET_MESSAGE_TYPE_FOTA_REQUEST:
                 {
                     MeshNetFOTAMessageReq *a = (MeshNetFOTAMessageReq *)p;
@@ -203,6 +204,8 @@ void MeshNet::loop(uint16_t wait_ms)
                     handleFOTA(a, from);
                     break;
                 }
+#endif
+#ifdef DO_FOTA
                 case MESH_NET_MESSAGE_TYPE_FOTA_RESPONSE:
                 {
                     MeshNetFOTAMessageRsp *a = (MeshNetFOTAMessageRsp *)p;
@@ -270,7 +273,9 @@ void MeshNet::sendFOTARSP(uint8_t address, uint16_t seqnum, uint8_t flags)
     uint8_t len = sizeof(MeshMessageHeader) + sizeof(MeshFOTAHeader);
 	manager->sendtoWait((uint8_t*)&_tmpMessage, len, address, flags);
 }
+#endif
 
+#ifdef UsesSPIFLASH
 void MeshNet::handleFOTA(MeshNetFOTAMessageReq *msg, uint8_t from)
 {
     if (msg->headerFOTA.sequence == 0)
