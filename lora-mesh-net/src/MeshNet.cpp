@@ -14,7 +14,7 @@
 SSD1306AsciiWire disp;
 #endif
 
-#ifdef UsesSPIFLASH
+#ifdef FOTA_CLIENT
 #include <SPIFlash.h>
 SPIFlash flash(SS_FLASHMEM);
 #endif
@@ -42,7 +42,7 @@ void printMsg(const char * msg, bool clear=false)
     Serial.print(msg);
 }
 
-#ifdef UsesSPIFLASH
+#ifdef FOTA_CLIENT
 void hexConv (const uint8_t * (& pStr), byte & b)
 {
     b = *pStr++ - '0';
@@ -145,7 +145,7 @@ void MeshNet::loop(uint16_t wait_ms)
         pingTimeout = currentSeconds;
         pingNode(ping);
     }
-#ifdef UsesSPIFLASH
+#ifdef FOTA_CLIENT
     if(fotaActive && currentSeconds - fotaTimeout >= fotaInterval)
     {
         fotaActive = false;
@@ -196,7 +196,7 @@ void MeshNet::loop(uint16_t wait_ms)
                     break;
                 }
 
-#ifdef UsesSPIFLASH
+#ifdef FOTA_CLIENT
                 case MESH_NET_MESSAGE_TYPE_FOTA_REQUEST:
                 {
                     MeshNetFOTAMessageReq *a = (MeshNetFOTAMessageReq *)p;
@@ -204,8 +204,6 @@ void MeshNet::loop(uint16_t wait_ms)
                     handleFOTA(a, from);
                     break;
                 }
-#endif
-#ifdef DO_FOTA
                 case MESH_NET_MESSAGE_TYPE_FOTA_RESPONSE:
                 {
                     MeshNetFOTAMessageRsp *a = (MeshNetFOTAMessageRsp *)p;
@@ -254,7 +252,8 @@ void MeshNet::pingNode(uint8_t address, uint8_t flags)
     
 	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetPingMessage), address, flags);
 }
-#ifdef DO_FOTA
+
+#ifdef FOTA_SERVER
 void MeshNet::sendFOTAREQ(uint8_t address, uint16_t seqnum, char *buf)
 {
     MeshNetFOTAMessageReq *a = (MeshNetFOTAMessageReq *)_tmpMessage;
@@ -264,7 +263,9 @@ void MeshNet::sendFOTAREQ(uint8_t address, uint16_t seqnum, char *buf)
     memcpy(a->data, buf, strlen(buf));   
 	manager->sendtoWait((uint8_t*)&_tmpMessage, len, address);
 }
+#endif
 
+#ifdef FOTA_CLIENT
 void MeshNet::sendFOTARSP(uint8_t address, uint16_t seqnum, uint8_t flags)
 {
     MeshNetFOTAMessageReq *a = (MeshNetFOTAMessageReq *)_tmpMessage;
@@ -275,7 +276,7 @@ void MeshNet::sendFOTARSP(uint8_t address, uint16_t seqnum, uint8_t flags)
 }
 #endif
 
-#ifdef UsesSPIFLASH
+#ifdef FOTA_CLIENT
 void MeshNet::handleFOTA(MeshNetFOTAMessageReq *msg, uint8_t from)
 {
     if (msg->headerFOTA.sequence == 0)
