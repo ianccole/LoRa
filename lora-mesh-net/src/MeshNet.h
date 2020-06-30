@@ -89,6 +89,12 @@ public:
         #endif
     };
 
+    void setPower(int8_t powerdBm)
+    {   
+        power = powerdBm;
+        rf95.setTxPower(power);
+    };
+
     uint8_t ping;
 
 private:

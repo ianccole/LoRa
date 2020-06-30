@@ -87,6 +87,16 @@ void handleData() {
             break;
         }
 
+        case 'D':
+        {
+            int8_t powerdBm = atoi(&buffer[1]);
+            sprintf(buffer, "Power: %d dBm\n", powerdBm);
+            Serial.print(buffer);
+            // mesh.pingNode(nodeId);
+            mesh.setPower(powerdBm);
+            break;
+        }
+
         case 'R':
             mesh.printRoutingTable();
             break;
