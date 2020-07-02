@@ -204,6 +204,8 @@ void MeshNet::loop(uint16_t wait_ms)
                     handleFOTA(a, from);
                     break;
                 }
+#endif
+#ifdef FOTA_SERVER
                 case MESH_NET_MESSAGE_TYPE_FOTA_RESPONSE:
                 {
                     MeshNetFOTAMessageRsp *a = (MeshNetFOTAMessageRsp *)p;
@@ -374,11 +376,11 @@ bool MeshNet::burnHexLine(const uint8_t *pLine)
 
             case 1:
                 /*
-                | +0-------------------1--------------
-                | |0|1|2|3|4|5|6|7|8|9|0|1..
-                | +------------------------------------
-                | |F|L|X|I|M|G|:|N|N|:|x|x|x|...
-                | +------------------------------------
+                +0-------------------1--------------
+                |0|1|2|3|4|5|6|7|8|9|0|1..
+                +------------------------------------
+                |F|L|X|I|M|G|:|N|N|:|x|x|x|...
+                +------------------------------------
                 */
 
                 // write header
