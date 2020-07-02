@@ -29,6 +29,17 @@ public:
         uint8_t             data[MESH_NET_MAX_MESSAGE_LEN]; ///< Application layer payload data
     } MesNetApplicationMessage;
 
+    /*-----------------------------
+    | flags:
+    |0 1 2 3 4 5 6 7 
+    +-+-+-+-+-+-+-+-+
+    |A|A|
+    |P|D|
+    |C|R|
+    +-+-+-+-+-+-+-+-+
+    | APC Adaptive Power Control
+    | ADC Adaptive Data Rate
+    +------------------------------*/
     typedef struct
     {
         MeshMessageHeader   header;  ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
@@ -49,6 +60,16 @@ public:
         uint8_t             data[MESH_NET_MAX_MESSAGE_LEN - sizeof(MeshMessageHeader) - sizeof(MeshFOTAHeader)]; ///< Intel Hex string
     } MeshNetFOTAMessageReq;
 
+    /*-----------------------------
+    | flags:
+    |0 1 2 3 4 5 6 7 
+    +-+-+-+-+-+-+-+-+
+    | ACK value     |
+    +-+-+-+-+-+-+-+-+
+    | 0 ACK
+    | 1 NAK csum error
+    | 2 NAK not active
+    +------------------------------*/
     typedef struct
     {
         MeshMessageHeader   header; ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
