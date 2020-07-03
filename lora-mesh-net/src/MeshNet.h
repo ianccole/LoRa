@@ -119,7 +119,6 @@ public:
     uint8_t ping;
 
 private:
-    uint8_t previousSeconds;
     const uint8_t pingInterval = 5;
     const uint8_t fotaInterval = 15;
     uint8_t pingTimeout;
