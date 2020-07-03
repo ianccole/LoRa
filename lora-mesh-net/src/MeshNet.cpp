@@ -140,13 +140,13 @@ void MeshNet::loop(uint16_t wait_ms)
 	uint8_t from;
     uint8_t currentSeconds = seconds();
 
-    if(ping && currentSeconds - pingTimeout >= pingInterval)
+    if(ping && uint8_t(currentSeconds - pingTimeout) > pingInterval)
     {
         pingTimeout = currentSeconds;
         pingNode(ping);
     }
 #ifdef FOTA_CLIENT
-    if(fotaActive && currentSeconds - fotaTimeout >= fotaInterval)
+    if(fotaActive && uint8_t(currentSeconds - fotaTimeout) > fotaInterval)
     {
         fotaActive = false;
         Serial.println("FOTA timeout");
@@ -288,7 +288,6 @@ void MeshNet::handleFOTA(MeshNetFOTAMessageReq *msg, uint8_t from)
         while(flash.busy());
         Serial.println("DONE");        
         fotaActive = true;
-        fotaTimeout = seconds();
         flashIndex = FLASHHDRLEN; // reserve space for flash header
     }
     if(fotaActive)
