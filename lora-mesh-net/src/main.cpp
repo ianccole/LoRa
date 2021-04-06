@@ -6,7 +6,6 @@
  */
 
 #include <Arduino.h>
-#include <EEPROM.h>
 #include <RHRouter.h>
 #include <RHMesh.h>
 #include <RH_RF95.h>
@@ -15,6 +14,7 @@
 #define CAD_TIMEOUT 500
 
 #include <MeshNet.h>
+#include <NVStorage.h>
 
 struct nodeInfo
 {
@@ -74,7 +74,8 @@ void handleData() {
             break;
 
         case 'W':
-            EEPROM.put(0, nodeInfo);
+            EEPROM.write(0, nodeInfo.nodeId);
+            EEPROM.write(1, nodeInfo.nodeType);
             break;
 
         case 'P':
@@ -128,7 +129,9 @@ void setup()
 {
   Serial.begin(57600);
 
-  EEPROM.get(0, nodeInfo);
+  nodeInfo.nodeId = EEPROM.read(0);
+  nodeInfo.nodeType = EEPROM.read(1);
+
   sprintf(buffer, "Node id: %d, Node type: %d\n", nodeInfo.nodeId, nodeInfo.nodeType);
   Serial.print(buffer);
 

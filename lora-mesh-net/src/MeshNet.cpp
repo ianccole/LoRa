@@ -3,7 +3,7 @@
 #include <RHMesh.h>
 #include <RH_RF95.h>
 #include <MeshNet.h>
-#include <avr/wdt.h>
+#include <MemoryFree.h>
 
 #define FLASHHDRLEN (10)
 
@@ -15,6 +15,7 @@ SSD1306AsciiWire disp;
 #endif
 
 #ifdef FOTA_CLIENT
+#include <avr/wdt.h>
 #include <SPIFlash.h>
 SPIFlash flash(SS_FLASHMEM);
 #endif
@@ -26,9 +27,10 @@ static char buffer[50];
 
 int freeMem()
 {
-  extern int __heap_start, *__brkval;
-  int v;
-  return (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
+//   extern int __heap_start, *__brkval;
+//   int v;
+//   return (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
+  return freeMemory();
 }
 
 void printMsg(const char * msg, bool clear=false)
