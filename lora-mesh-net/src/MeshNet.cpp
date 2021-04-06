@@ -20,7 +20,11 @@ SSD1306AsciiWire disp;
 SPIFlash flash(SS_FLASHMEM);
 #endif
 
-RH_RF95 MeshNet::rf95;
+#if defined(_SAMD21_)
+    #define Serial SerialUSB
+#endif
+
+// RH_RF95 MeshNet::rf95;
 
 static char _tmpMessage[MESH_NET_MAX_MESSAGE_LEN];
 static char buffer[50];
@@ -85,8 +89,8 @@ void resetUsingWatchdog()
 
 ////////////////////////////////////////////////////////////////////
 // Constructors
-MeshNet::MeshNet(void)
-    : fotaTimeout(0), fotaActive(false)
+MeshNet::MeshNet(RH_RF95& rf95)
+    : fotaTimeout(0), fotaActive(false), rf95(rf95)
 {
 }
 

@@ -80,7 +80,7 @@ public:
     /// Constructor.
     /// \param[in] driver The RadioHead driver to use to transport messages.
     /// \param[in] thisAddress The address to assign to this node. Defaults to 0
-    MeshNet(void);
+    MeshNet(RH_RF95&);
 
     void setup(uint8_t thisAddress, float freqMHz, int8_t power, uint16_t cad_timeout);
 
@@ -127,7 +127,7 @@ private:
     int8_t power;
     bool fotaActive;
     // Singleton instance of the radio driver
-    static RH_RF95 rf95;
+    RH_RF95& rf95;
 
     // Class to manage message delivery and receipt, using the driver declared above
     RHMesh *manager;

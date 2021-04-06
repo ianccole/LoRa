@@ -16,6 +16,15 @@
 #include <MeshNet.h>
 #include <NVStorage.h>
 
+#if defined(_SAMD21_)
+    #define Serial SerialUSB
+    #define DIO0 17
+#else
+    #define DIO0 2
+#endif
+
+static RH_RF95 rf95(SS,DIO0);
+
 struct nodeInfo
 {
   uint8_t nodeId;
@@ -29,7 +38,7 @@ char buffer[numChars];   // an array to store the received data
 bool newData = false;
 bool serialData = false;
 
-MeshNet mesh;
+MeshNet mesh(rf95);
 
 void recvWithEndMarker() {
     static byte ndx = 0;
@@ -62,6 +71,7 @@ void handleData() {
     switch(buffer[0])
     {
         case 'N':
+            Serial.println(EEPROM.read(0));
             nodeInfo.nodeId = atoi(&buffer[1]);
             sprintf(buffer, "Node id: %d\n", nodeInfo.nodeId);
             Serial.print(buffer);
@@ -76,6 +86,10 @@ void handleData() {
         case 'W':
             EEPROM.write(0, nodeInfo.nodeId);
             EEPROM.write(1, nodeInfo.nodeType);
+
+#if defined(_SAMD21_)
+            EEPROM.commit();
+#endif
             break;
 
         case 'P':
