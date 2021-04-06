@@ -16,7 +16,7 @@
 #include <MeshNet.h>
 #include <NVStorage.h>
 
-#if defined(_SAMD21_)
+#if defined(ARDUINO_ARCH_SAMD)
     #define Serial SerialUSB
     #define DIO0 17
 #else
