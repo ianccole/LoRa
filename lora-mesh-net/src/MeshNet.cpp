@@ -20,10 +20,6 @@ SSD1306AsciiWire disp;
 SPIFlash flash(SS_FLASHMEM);
 #endif
 
-#if defined(_SAMD21_)
-    #define Serial SerialUSB
-#endif
-
 // RH_RF95 MeshNet::rf95;
 
 static char _tmpMessage[MESH_NET_MAX_MESSAGE_LEN];
