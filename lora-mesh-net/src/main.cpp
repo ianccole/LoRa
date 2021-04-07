@@ -15,6 +15,7 @@
 
 #include <MeshNet.h>
 #include <NVStorage.h>
+#include <gps.h>
 
 #if defined(ARDUINO_ARCH_SAMD)
     #define Serial SerialUSB
@@ -135,21 +136,37 @@ void handleData() {
             break;
         }
 #endif
+        case 'G':
+        {
+            uint8_t nodeId = atoi(&buffer[1]);
+            if (gpsModule.gpsFix())
+            {
+                gpsModule.getFixStr(buffer);
+                Serial.print(buffer);
+                mesh.appMessage(nodeId, buffer);
+            }
+            else
+            {
+                Serial.println(F("No Fix"));
+            }
+            break;
+        }
     }
   }
 }
 
 void setup()
 {
-  Serial.begin(57600);
+    Serial.begin(57600);
 
-  nodeInfo.nodeId = EEPROM.read(0);
-  nodeInfo.nodeType = EEPROM.read(1);
+    nodeInfo.nodeId = EEPROM.read(0);
+    nodeInfo.nodeType = EEPROM.read(1);
 
-  sprintf(buffer, "Node id: %d, Node type: %d\n", nodeInfo.nodeId, nodeInfo.nodeType);
-  Serial.print(buffer);
+    sprintf(buffer, "Node id: %d, Node type: %d\n", nodeInfo.nodeId, nodeInfo.nodeType);
+    Serial.print(buffer);
 
-  mesh.setup(nodeInfo.nodeId, FREQMHZ, POWER, CAD_TIMEOUT);
+    gpsModule.setup();
+    mesh.setup(nodeInfo.nodeId, FREQMHZ, POWER, CAD_TIMEOUT);
 }
 
 void loop()
@@ -157,5 +174,12 @@ void loop()
     recvWithEndMarker();
     handleData();
 
-    mesh.loop(200);
+    // if(gpsModule.checkGPS())
+    // {
+    //     gpsModule.getFixStr(buffer);
+    //     Serial.print(buffer);
+    // }
+
+    gpsModule.checkGPS();
+    mesh.loop(20);
 }

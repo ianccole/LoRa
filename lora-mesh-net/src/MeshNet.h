@@ -8,6 +8,8 @@
 #define MESH_NET_MESSAGE_TYPE_PING_RESPONSE                  0x51
 #define MESH_NET_MESSAGE_TYPE_FOTA_REQUEST                   0x52
 #define MESH_NET_MESSAGE_TYPE_FOTA_RESPONSE                  0x53
+#define MESH_NET_MESSAGE_TYPE_APP_REQUEST                    0x54
+#define MESH_NET_MESSAGE_TYPE_APP_RESPONSE                   0x55
 
 #define seconds() (millis()/1000)
 
@@ -77,6 +79,12 @@ public:
         uint16_t            sequence;
     } MeshNetFOTAMessageRsp;
 
+    typedef struct
+    {
+        MeshMessageHeader   header;  ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
+        char                data[MESH_NET_MAX_MESSAGE_LEN - sizeof(MeshMessageHeader)]; ///< message text
+    } MeshNetAppMessage;
+
     /// Constructor.
     /// \param[in] driver The RadioHead driver to use to transport messages.
     /// \param[in] thisAddress The address to assign to this node. Defaults to 0
@@ -87,6 +95,8 @@ public:
     void loop(uint16_t wait_ms);
 
     void pingNode(uint8_t address, uint8_t flags = 0);
+
+    void appMessage(uint8_t address, char * buffer, uint8_t flags = 0);
 
     void sendFOTAREQ(uint8_t address, uint16_t seqnum, char *buf);
     void sendFOTARSP(uint8_t address, uint16_t seqnum, uint8_t flags);

@@ -216,6 +216,24 @@ void MeshNet::loop(uint16_t wait_ms)
                     break;
                 }
 #endif
+                case MESH_NET_MESSAGE_TYPE_APP_REQUEST:
+                {
+                    MeshNetAppMessage *a = (MeshNetAppMessage *)p;
+                    a->data[len - sizeof(MeshMessageHeader)] = '\0';
+                    Serial.println(a->data);
+
+                    MeshNetPingMessage *r;
+                    r = (MeshNetPingMessage *)_tmpMessage;
+                    r->header.msgType = MESH_NET_MESSAGE_TYPE_PING_RESPONSE;
+                    r->power = power;
+                    r->rssi = rf95.lastRssi();
+                    r->snr = rf95.lastSNR();
+
+                    sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingMessage), from);
+
+                    break;
+                }
+
                 default:
                     Serial.println("Unhandled: message");
                     break;
@@ -255,6 +273,15 @@ void MeshNet::pingNode(uint8_t address, uint8_t flags)
 	a->power = power;
     
 	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetPingMessage), address, flags);
+}
+
+void MeshNet::appMessage(uint8_t address, char * buf, uint8_t flags)
+{
+    MeshNetAppMessage *a = (MeshNetAppMessage *)_tmpMessage;
+    a->header.msgType = MESH_NET_MESSAGE_TYPE_APP_REQUEST;
+    uint8_t len = strlen(buf) + sizeof(MeshMessageHeader);
+    memcpy(a->data, buf, strlen(buf));       
+	sendtoWaitStats((uint8_t*)_tmpMessage, len, address, flags);
 }
 
 #ifdef FOTA_SERVER
