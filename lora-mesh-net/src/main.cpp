@@ -16,10 +16,9 @@
 #include <MeshNet.h>
 #include <NVStorage.h>
 #include <gps.h>
-
+ 
 #if defined(ARDUINO_ARCH_SAMD)
     #define Serial SerialUSB
-    #define DIO0 17
 #else
     #define DIO0 2
 #endif
@@ -61,6 +60,20 @@ void recvWithEndMarker() {
             ndx = 0;
             newData = true;
         }
+    }
+}
+
+void sendFix(uint8_t nodeId)
+{
+    if (gpsModule.gpsFix())
+    {
+        gpsModule.getFixStr(buffer);
+        Serial.print(buffer);
+        mesh.appMessage(nodeId, buffer);
+    }
+    else
+    {
+        Serial.println(F("No Fix"));
     }
 }
 
@@ -139,16 +152,7 @@ void handleData() {
         case 'G':
         {
             uint8_t nodeId = atoi(&buffer[1]);
-            if (gpsModule.gpsFix())
-            {
-                gpsModule.getFixStr(buffer);
-                Serial.print(buffer);
-                mesh.appMessage(nodeId, buffer);
-            }
-            else
-            {
-                Serial.println(F("No Fix"));
-            }
+            sendFix(nodeId);
             break;
         }
     }
@@ -171,15 +175,21 @@ void setup()
 
 void loop()
 {
+    static unsigned long start = millis();
+    static unsigned int seconds = 0;
+    unsigned long now = millis();
+
     recvWithEndMarker();
     handleData();
 
-    // if(gpsModule.checkGPS())
-    // {
-    //     gpsModule.getFixStr(buffer);
-    //     Serial.print(buffer);
-    // }
-
     gpsModule.checkGPS();
     mesh.loop(20);
+
+    // if (now-start > 5000)
+    // {
+    //     start = now;
+    //     // seconds +=1;
+    //     sendFix(100);
+    // }
+
 }
