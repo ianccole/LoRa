@@ -88,6 +88,10 @@ extern "C"
 // #define PIN_LED3             PIN_LED_TXL
 #define LED_BUILTIN          PIN_LED_14
 
+// RFM96 Pins
+#define DIO0                 (17u)
+#define SS                   (10u)
+
 /*
  * Analog pins
  */
@@ -139,7 +143,7 @@ static const uint8_t ATN = PIN_ATN;
 #define PAD_SPI_TX           SPI_PAD_0_SCK_1
 #define PAD_SPI_RX           SERCOM_RX_PAD_3
 
-static const uint8_t SS	  = (10u) ;	
+// static const uint8_t SS	  = (10u) ;	
 static const uint8_t MOSI = PIN_SPI_MOSI ;
 static const uint8_t MISO = PIN_SPI_MISO ;
 static const uint8_t SCK  = PIN_SPI_SCK ;
