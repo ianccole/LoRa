@@ -19,7 +19,16 @@ public:
     };
 
     /// Constructor.
-    GPSModule() : _state(gps_state::gps_off), _gpsFix(false)
+    GPSModule() : 
+        ttff(0),
+        gpsFix(false),
+        lat(0),
+        lon(0),
+        fix_age(0),
+        date(0),
+        time(0),
+        _state(gps_state::gps_off)
+        
     {}
 
     void setup()
@@ -40,14 +49,14 @@ public:
 
             if (gps.encode(ch))
             {
-                _gpsFix = true;
+                gpsFix = true;
 
                 switch(state())
                 {
                     case GPSModule::gps_state::gps_on:
                         _state = gps_state::gps_on_first_fix;
-                        _ttff = millis() - _start;
-                        SerialUSB.print(_ttff);
+                        ttff = millis() - _start;
+                        SerialUSB.print(ttff);
                         SerialUSB.println(" TTFF");
                         break;
 
@@ -61,20 +70,17 @@ public:
                 }
             }
         }
-        return _gpsFix;
+        return gpsFix;
     }
 
     void getFixStr(char* buffer)
     {
         if (buffer)
         {
-
-            long lat, lon;
-            unsigned long fix_age; // returns +- latitude/longitude in degrees
-            unsigned long date, time;
             gps.get_position(&lat, &lon, &fix_age);
             gps.get_datetime(&date, &time, &fix_age);
             // SerialUSB.println(fix_age);
+
             if (fix_age == TinyGPS::GPS_INVALID_AGE)
             {
                 SerialUSB.println("No fix detected");
@@ -96,7 +102,7 @@ public:
         digitalWrite(PIN_GPS_POWER, GPS_ON);    // GPS power ON
         _state = gps_state::gps_on;
         _start = millis();
-        _ttff = 0;
+        ttff = 0;
     }
 
     void powerOff()
@@ -110,21 +116,18 @@ public:
         return _state;
     }
 
-    unsigned long ttff()
-    {
-        return _ttff;
-    }
-
-    bool gpsFix()
-    {
-        return _gpsFix;
-    }
+    unsigned long ttff;
+    bool gpsFix;
+    long lat;
+    long lon;
+    unsigned long fix_age;
+    unsigned long date;
+    unsigned long time;
 
 private:
     gps_state _state;
-    bool _gpsFix;
+    // bool _gpsFix;
     unsigned long _start;
-    unsigned long _ttff;
 
 };
 #else
@@ -141,7 +144,16 @@ public:
     };
 
     /// Constructor.
-    GPSModule() : _state(gps_state::gps_off), _gpsFix(false)
+    GPSModule() : 
+        ttff(0),
+        gpsFix(false),
+        lat(0),
+        lon(0),
+        fix_age(0),
+        date(0),
+        time(0),
+        _state(gps_state::gps_off)
+        
     {}
 
     void setup()
@@ -150,7 +162,7 @@ public:
 
     bool checkGPS()
     {
-        return _gpsFix;
+        return gpsFix;
     }
 
     void getFixStr(char* buffer)
@@ -170,21 +182,18 @@ public:
         return _state;
     }
 
-    unsigned long ttff()
-    {
-        return _ttff;
-    }
-
-    bool gpsFix()
-    {
-        return _gpsFix;
-    }
+    unsigned long ttff;
+    bool gpsFix;
+    long lat;
+    long lon;
+    unsigned long fix_age;
+    unsigned long date;
+    unsigned long time;
 
 private:
     gps_state _state;
-    bool _gpsFix;
+    // bool _gpsFix;
     unsigned long _start;
-    unsigned long _ttff;
 };
 
 #endif
