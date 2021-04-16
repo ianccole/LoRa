@@ -18,6 +18,15 @@ class MeshNet
 public:
     #define MESH_NET_MAX_MESSAGE_LEN (RH_MESH_MAX_MESSAGE_LEN - sizeof(MeshNet::MeshMessageHeader))
 
+    enum class meshNodeType
+    {
+        node_gateway    = 0,
+        node_relay      = 1,
+        node_track      = 2,
+        node_test       = 3,
+        node_default    = 255
+    };
+
     /// Structure of the basic MeshNet header.
     typedef struct
     {
@@ -28,7 +37,7 @@ public:
     typedef struct
     {
         MeshMessageHeader   header; ///< msgType = RH_MESH_MESSAGE_TYPE_APPLICATION 
-        uint8_t             data[MESH_NET_MAX_MESSAGE_LEN]; ///< Application layer payload data
+        char                data[MESH_NET_MAX_MESSAGE_LEN - sizeof(MeshMessageHeader)]; ///< Application layer payload data
     } MesNetApplicationMessage;
 
     /*-----------------------------
@@ -90,7 +99,7 @@ public:
     /// \param[in] thisAddress The address to assign to this node. Defaults to 0
     MeshNet(RH_RF95&);
 
-    void setup(uint8_t thisAddress, float freqMHz, int8_t power, uint16_t cad_timeout);
+    void setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t power, uint16_t cad_timeout);
 
     void loop(uint16_t wait_ms);
 
@@ -98,6 +107,7 @@ public:
 
     void appMessage(uint8_t address, char * buffer, uint8_t flags = 0);
 
+    void sendFix(uint8_t address);
     void sendFOTAREQ(uint8_t address, uint16_t seqnum, char *buf);
     void sendFOTARSP(uint8_t address, uint16_t seqnum, uint8_t flags);
 
@@ -126,7 +136,7 @@ public:
         rf95.setTxPower(power);
     };
 
-    uint8_t ping;
+    uint8_t pingNodeId;
 
 private:
     const uint8_t pingInterval = 5;
@@ -135,6 +145,10 @@ private:
     uint8_t fotaTimeout;
     uint32_t flashIndex;
     int8_t power;
+
+    // node type
+    meshNodeType nodeType;
+    
     bool fotaActive;
     // Singleton instance of the radio driver
     RH_RF95& rf95;
