@@ -15,7 +15,6 @@
 
 #include <MeshNet.h>
 #include <NVStorage.h>
-#include <gps.h>
  
 #if defined(ARDUINO_ARCH_SAMD)
     #define Serial SerialUSB
@@ -63,20 +62,6 @@ void recvWithEndMarker() {
     }
 }
 
-void sendFix(uint8_t nodeId)
-{
-    if (gpsModule.gpsFix())
-    {
-        gpsModule.getFixStr(buffer);
-        Serial.print(buffer);
-        mesh.appMessage(nodeId, buffer);
-    }
-    else
-    {
-        Serial.println(F("No Fix"));
-    }
-}
-
 void handleData() {
   if (newData == true) 
   {
@@ -111,8 +96,7 @@ void handleData() {
             uint8_t nodeId = atoi(&buffer[1]);
             sprintf(buffer, "Ping Node id: %d\n", nodeId);
             Serial.print(buffer);
-            // mesh.pingNode(nodeId);
-            mesh.ping = nodeId;
+            mesh.pingNodeId = nodeId;
             break;
         }
 
@@ -121,7 +105,6 @@ void handleData() {
             int8_t powerdBm = atoi(&buffer[1]);
             sprintf(buffer, "Power: %d dBm\n", powerdBm);
             Serial.print(buffer);
-            // mesh.pingNode(nodeId);
             mesh.setPower(powerdBm);
             break;
         }
@@ -152,7 +135,7 @@ void handleData() {
         case 'G':
         {
             uint8_t nodeId = atoi(&buffer[1]);
-            sendFix(nodeId);
+            mesh.sendFix(nodeId);
             break;
         }
     }
@@ -169,27 +152,15 @@ void setup()
     sprintf(buffer, "Node id: %d, Node type: %d\n", nodeInfo.nodeId, nodeInfo.nodeType);
     Serial.print(buffer);
 
-    gpsModule.setup();
-    mesh.setup(nodeInfo.nodeId, FREQMHZ, POWER, CAD_TIMEOUT);
+    mesh.setup(nodeInfo.nodeId, nodeInfo.nodeType, FREQMHZ, POWER, CAD_TIMEOUT);
 }
 
 void loop()
 {
-    static unsigned long start = millis();
-    static unsigned int seconds = 0;
-    unsigned long now = millis();
 
     recvWithEndMarker();
     handleData();
 
-    gpsModule.checkGPS();
     mesh.loop(20);
-
-    // if (now-start > 5000)
-    // {
-    //     start = now;
-    //     // seconds +=1;
-    //     sendFix(100);
-    // }
 
 }
