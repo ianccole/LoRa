@@ -4,6 +4,7 @@
 #include <RH_RF95.h>
 #include <MeshNet.h>
 #include <MemoryFree.h>
+#include <gps.h>
 
 #define FLASHHDRLEN (10)
 
@@ -90,16 +91,18 @@ MeshNet::MeshNet(RH_RF95& rf95)
 {
 }
 
-void MeshNet::setup(uint8_t thisAddress, float freqMHz, int8_t power, uint16_t cad_timeout)
+void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t power, uint16_t cad_timeout)
 {
 	MeshNet::power = power;
+    MeshNet::nodeType = (meshNodeType)nodeType;
 	manager = new RHMesh(rf95, thisAddress);
-    ping=0;
+    pingNodeId=0;
+    gpsModule.setup();
 
 #ifdef UseSD1306
     Wire.begin();
     Wire.beginTransmission(SD1306_Address);
-    byte error = Wire.endTransmission();
+    Wire.endTransmission();
 
     disp.begin(&Adafruit128x64, SD1306_Address);
     disp.setFont(Adafruit5x7);
@@ -146,10 +149,12 @@ void MeshNet::loop(uint16_t wait_ms)
 	uint8_t from;
     uint8_t currentSeconds = seconds();
 
-    if(ping && uint8_t(currentSeconds - pingTimeout) > pingInterval)
+    gpsModule.checkGPS();
+
+    if(pingNodeId && uint8_t(currentSeconds - pingTimeout) > pingInterval)
     {
         pingTimeout = currentSeconds;
-        pingNode(ping);
+        pingNode(pingNodeId);
     }
 #ifdef FOTA_CLIENT
     if(fotaActive && uint8_t(currentSeconds - fotaTimeout) > fotaInterval)
@@ -222,7 +227,7 @@ void MeshNet::loop(uint16_t wait_ms)
 #endif
                 case MESH_NET_MESSAGE_TYPE_APP_REQUEST:
                 {
-                    MeshNetAppMessage *a = (MeshNetAppMessage *)p;
+                    MesNetApplicationMessage *a = (MesNetApplicationMessage *)p;
                     a->data[len - sizeof(MeshMessageHeader)] = '\0';
                     Serial.println(a->data);
 
@@ -281,11 +286,25 @@ void MeshNet::pingNode(uint8_t address, uint8_t flags)
 
 void MeshNet::appMessage(uint8_t address, char * buf, uint8_t flags)
 {
-    MeshNetAppMessage *a = (MeshNetAppMessage *)_tmpMessage;
+    MesNetApplicationMessage *a = (MesNetApplicationMessage *)_tmpMessage;
     a->header.msgType = MESH_NET_MESSAGE_TYPE_APP_REQUEST;
     uint8_t len = strlen(buf) + sizeof(MeshMessageHeader);
     memcpy(a->data, buf, strlen(buf));       
 	sendtoWaitStats((uint8_t*)_tmpMessage, len, address, flags);
+}
+
+void MeshNet::sendFix(uint8_t address)
+{
+    if (gpsModule.gpsFix)
+    {
+        gpsModule.getFixStr(buffer);
+        Serial.print(buffer);
+        appMessage(address, buffer);
+    }
+    else
+    {
+        Serial.println(F("No Fix"));
+    }
 }
 
 #ifdef FOTA_SERVER
