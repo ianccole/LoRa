@@ -97,6 +97,16 @@ public:
         }
     }
 
+    void getPosition(long *latitude, long *longitude, unsigned long *fix_age)
+    {
+        gps.get_position(latitude, longitude, fix_age);
+    }
+
+    void getDateTime(unsigned long *date, unsigned long *time, unsigned long *time_age)
+    {
+        gps.get_datetime(date, time, time_age);
+    }
+
     void powerOn()
     {
         digitalWrite(PIN_GPS_POWER, GPS_ON);    // GPS power ON
@@ -166,6 +176,14 @@ public:
     }
 
     void getFixStr(char* buffer)
+    {
+    }
+
+    void getPosition(long *latitude, long *longitude)
+    {
+    }
+
+    void getDateTime(unsigned long *date, unsigned long *time)
     {
     }
 
