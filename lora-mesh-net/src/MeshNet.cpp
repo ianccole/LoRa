@@ -281,7 +281,6 @@ void MeshNet::sendPingRsp(uint8_t address)
     r->snr = rf95.lastSNR();
 
     r->gpsFix = gpsModule.gpsFix;
-    int abc = htons(123);
 
     long lat; 
     long lon; 
