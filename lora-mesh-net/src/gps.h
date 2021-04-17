@@ -100,11 +100,17 @@ public:
     void getPosition(long *latitude, long *longitude, unsigned long *fix_age)
     {
         gps.get_position(latitude, longitude, fix_age);
+        *latitude = 0x11;
+        *longitude = 0x22;
+        *fix_age = 0x33;
     }
 
     void getDateTime(unsigned long *date, unsigned long *time, unsigned long *time_age)
     {
         gps.get_datetime(date, time, time_age);
+        *date = 0x44;
+        *time = 0x55;
+        *time_age = 0x66;
     }
 
     void powerOn()
