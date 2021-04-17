@@ -184,26 +184,34 @@ void MeshNet::loop(uint16_t wait_ms)
             {
                 case MESH_NET_MESSAGE_TYPE_PING_RESPONSE:
                 {
-                    MeshNetPingMessage *a = (MeshNetPingMessage *)p;
+                    MeshNetPingRsp *a = (MeshNetPingRsp *)p;
                     sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n",a->power, a->rssi, a->snr);
                     printMsg(buffer);
+                    if ( a->gpsFix )
+                    {
+                        sprintf(buffer, "Date: %lu, Time: %lu, LAT: %ld, LON: %ld\n", a->date, a->time, a->lat, a->lon);                        
+                        printMsg(buffer);
+                    }
                     break;
                 }
                 case MESH_NET_MESSAGE_TYPE_PING_REQUEST:
                 {
-                    MeshNetPingMessage *a;
+                    MeshNetPingReq *a;
                     
-                    a = (MeshNetPingMessage *)p;
+                    a = (MeshNetPingReq *)p;
                     sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n", a->power, rf95.lastRssi(), rf95.lastSNR());
                     printMsg(buffer);
 
-                    a = (MeshNetPingMessage *)_tmpMessage;
-                    a->header.msgType = MESH_NET_MESSAGE_TYPE_PING_RESPONSE;
-                    a->power = power;
-                    a->rssi = rf95.lastRssi();
-                    a->snr = rf95.lastSNR();
+                    sendPingRsp(from);
 
-                    sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingMessage), from);
+                    // MeshNetPingRsp *b;
+                    // b = (MeshNetPingRsp *)_tmpMessage;
+                    // b->header.msgType = MESH_NET_MESSAGE_TYPE_PING_RESPONSE;
+                    // b->power = power;
+                    // b->rssi = rf95.lastRssi();
+                    // b->snr = rf95.lastSNR();
+
+                    // sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), from);
                     break;
                 }
 
@@ -231,14 +239,16 @@ void MeshNet::loop(uint16_t wait_ms)
                     a->data[len - sizeof(MeshMessageHeader)] = '\0';
                     Serial.println(a->data);
 
-                    MeshNetPingMessage *r;
-                    r = (MeshNetPingMessage *)_tmpMessage;
-                    r->header.msgType = MESH_NET_MESSAGE_TYPE_PING_RESPONSE;
-                    r->power = power;
-                    r->rssi = rf95.lastRssi();
-                    r->snr = rf95.lastSNR();
+                    sendPingRsp(from);
 
-                    sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingMessage), from);
+                    // MeshNetPingRsp *r;
+                    // r = (MeshNetPingRsp *)_tmpMessage;
+                    // r->header.msgType = MESH_NET_MESSAGE_TYPE_PING_RESPONSE;
+                    // r->power = power;
+                    // r->rssi = rf95.lastRssi();
+                    // r->snr = rf95.lastSNR();
+
+                    // sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), from);
 
                     break;
                 }
@@ -249,6 +259,23 @@ void MeshNet::loop(uint16_t wait_ms)
             }
         }
 	}
+}
+
+void MeshNet::sendPingRsp(uint8_t address)
+{
+    MeshNetPingRsp *r;
+    r = (MeshNetPingRsp *)_tmpMessage;
+    r->header.msgType = MESH_NET_MESSAGE_TYPE_PING_RESPONSE;
+    r->power = power;
+    r->rssi = rf95.lastRssi();
+    r->snr = rf95.lastSNR();
+
+    r->gpsFix = gpsModule.gpsFix;
+
+    gpsModule.getPosition(&r->lat, &r->lon, &r->fix_age);
+    gpsModule.getDateTime(&r->date, &r->time, &r->time_age);
+
+    sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), address);
 }
 
 uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uint8_t flags)
@@ -277,11 +304,11 @@ uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uin
 
 void MeshNet::pingNode(uint8_t address, uint8_t flags)
 {
-    MeshNetPingMessage *a = (MeshNetPingMessage *)_tmpMessage;
+    MeshNetPingReq *a = (MeshNetPingReq *)_tmpMessage;
     a->header.msgType = MESH_NET_MESSAGE_TYPE_PING_REQUEST;
 	a->power = power;
     
-	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetPingMessage), address, flags);
+	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetPingReq), address, flags);
 }
 
 void MeshNet::appMessage(uint8_t address, char * buf, uint8_t flags)

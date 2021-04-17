@@ -55,9 +55,22 @@ public:
     {
         MeshMessageHeader   header;  ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
         uint8_t             power;   ///< Transmit power of this message
+    } MeshNetPingReq;
+
+    typedef struct
+    {
+        MeshMessageHeader   header;  ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
+        uint8_t             power;   ///< Transmit power of this message
         int8_t              rssi;    ///< RSSI in Ping response
         int8_t              snr;     ///< SNR in Ping response
-    } MeshNetPingMessage;
+        bool                gpsFix;
+        long                lat;
+        long                lon;
+        unsigned long       fix_age;
+        unsigned long       date;
+        unsigned long       time;
+        unsigned long       time_age;
+    } MeshNetPingRsp;
 
     typedef struct 
     {
@@ -156,6 +169,7 @@ private:
     // Class to manage message delivery and receipt, using the driver declared above
     RHMesh *manager;
 
+    void sendPingRsp(uint8_t address);
     uint8_t sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t dest, uint8_t flags = 0);
     bool burnHexLine(const uint8_t *pLine);
     void handleFOTA(MeshNetFOTAMessageReq *msg, uint8_t from);
