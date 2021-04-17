@@ -157,7 +157,7 @@ void MeshNet::loop(uint16_t wait_ms)
 
         for(ii=0;ii<nodeIdx;ii++)
         {
-            pingNode(ii);    
+            pingNode(nodes[ii]);    
         }
     }
 #ifdef FOTA_CLIENT
