@@ -189,7 +189,17 @@ void MeshNet::loop(uint16_t wait_ms)
                     printMsg(buffer);
                     if ( a->gpsFix )
                     {
-                        sprintf(buffer, "Date: %lu, Time: %lu, LAT: %ld, LON: %ld\n", a->date, a->time, a->lat, a->lon);                        
+                        long lat; 
+                        long lon; 
+                        unsigned long date;
+                        unsigned long time; 
+
+                        lat = ntohl(a->lat);
+                        lon = ntohl(a->lon);
+                        date = ntohl(a->date);
+                        time = ntohl(a->time);
+
+                        sprintf(buffer, "Date: %lu, Time: %lu, LAT: %ld, LON: %ld\n", date, time, lat, lon);                        
                         printMsg(buffer);
                     }
                     break;
@@ -271,9 +281,30 @@ void MeshNet::sendPingRsp(uint8_t address)
     r->snr = rf95.lastSNR();
 
     r->gpsFix = gpsModule.gpsFix;
+    int abc = htons(123);
 
-    gpsModule.getPosition(&r->lat, &r->lon, &r->fix_age);
-    gpsModule.getDateTime(&r->date, &r->time, &r->time_age);
+    long lat; 
+    long lon; 
+    unsigned long fix_age;
+
+    gpsModule.getPosition(&lat, &lon, &fix_age);
+    r->lat = htonl(lat);
+    r->lon = htonl(lon);
+    r->fix_age = htonl(fix_age);
+
+    unsigned long date;
+    unsigned long time; 
+    unsigned long time_age;
+    gpsModule.getDateTime(&date, &time, &time_age);
+    r->date = htonl(date);
+    r->time = htonl(time);
+    r->time_age = htonl(time_age);
+
+    // gpsModule.getFixStr(buffer);
+    // Serial.print(buffer);
+
+    sprintf(buffer, "Date: %lu, Time: %lu, LAT: %ld, LON: %ld\n", date, time, lat, lon);                        
+    Serial.print(buffer);
 
     sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), address);
 }
