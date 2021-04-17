@@ -187,10 +187,16 @@ public:
 
     void getPosition(long *latitude, long *longitude, unsigned long *fix_age)
     {
+        *latitude = 0x11;
+        *longitude = 0x22;
+        *fix_age = 0x33;
     }
 
     void getDateTime(unsigned long *date, unsigned long *time, unsigned long *time_age)
     {
+        *date = 0x44;
+        *time = 0x55;
+        *time_age = 0x66;
     }
 
     void powerOn()
