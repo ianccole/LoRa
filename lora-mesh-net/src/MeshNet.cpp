@@ -187,7 +187,7 @@ void MeshNet::loop(uint16_t wait_ms)
                     MeshNetPingRsp *a = (MeshNetPingRsp *)p;
                     sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n",a->power, a->rssi, a->snr);
                     printMsg(buffer);
-                    if ( a->gpsFix )
+                    if ( flags && 0x01 )
                     {
                         long lat; 
                         long lon; 
@@ -280,7 +280,7 @@ void MeshNet::sendPingRsp(uint8_t address)
     r->rssi = rf95.lastRssi();
     r->snr = rf95.lastSNR();
 
-    r->gpsFix = gpsModule.gpsFix;
+    uint8_t flags = gpsModule.gpsFix ? 1 : 0;
 
     long lat; 
     long lon; 
@@ -305,7 +305,7 @@ void MeshNet::sendPingRsp(uint8_t address)
     sprintf(buffer, "Date: %lu, Time: %lu, LAT: %ld, LON: %ld\n", date, time, lat, lon);                        
     Serial.print(buffer);
 
-    sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), address);
+    sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), address, flags);
 }
 
 uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uint8_t flags)
