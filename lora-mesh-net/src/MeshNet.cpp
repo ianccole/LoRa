@@ -280,7 +280,7 @@ void MeshNet::sendPingRsp(uint8_t address)
     r->rssi = rf95.lastRssi();
     r->snr = rf95.lastSNR();
 
-    r->gpsFix = (uint8_t)gpsModule.gpsFix;
+    r->gpsFix = gpsModule.gpsFix;
 
     long lat; 
     long lon; 

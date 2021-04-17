@@ -63,12 +63,12 @@ public:
         uint8_t             power;   ///< Transmit power of this message
         int8_t              rssi;    ///< RSSI in Ping response
         int8_t              snr;     ///< SNR in Ping response
-        uint8_t             gpsFix;
+        bool                gpsFix;
+        unsigned long       date;
+        unsigned long       time;
         long                lat;
         long                lon;
         unsigned long       fix_age;
-        unsigned long       date;
-        unsigned long       time;
         unsigned long       time_age;
     } MeshNetPingRsp;
 
