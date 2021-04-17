@@ -96,7 +96,8 @@ void handleData() {
             uint8_t nodeId = atoi(&buffer[1]);
             sprintf(buffer, "Ping Node id: %d\n", nodeId);
             Serial.print(buffer);
-            mesh.pingNodeId = nodeId;
+            // mesh.pingNodeId = nodeId;
+            mesh.addNode(nodeId);
             break;
         }
 

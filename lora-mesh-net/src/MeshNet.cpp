@@ -87,7 +87,7 @@ void resetUsingWatchdog()
 ////////////////////////////////////////////////////////////////////
 // Constructors
 MeshNet::MeshNet(RH_RF95& rf95)
-    : fotaTimeout(0), fotaActive(false), rf95(rf95)
+    : fotaTimeout(0), fotaActive(false), rf95(rf95), nodeIdx(0)
 {
 }
 
@@ -151,10 +151,14 @@ void MeshNet::loop(uint16_t wait_ms)
 
     gpsModule.checkGPS();
 
-    if(pingNodeId && uint8_t(currentSeconds - pingTimeout) > pingInterval)
+    if (nodeIdx && uint8_t(currentSeconds - pingTimeout) > pingInterval)
     {
-        pingTimeout = currentSeconds;
-        pingNode(pingNodeId);
+        uint8_t ii;
+
+        for(ii=0;ii<nodeIdx;ii++)
+        {
+            pingNode(ii);    
+        }
     }
 #ifdef FOTA_CLIENT
     if(fotaActive && uint8_t(currentSeconds - fotaTimeout) > fotaInterval)

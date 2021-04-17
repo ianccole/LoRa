@@ -149,6 +149,22 @@ public:
         rf95.setTxPower(power);
     };
 
+    void addNode(uint8_t node)
+    {
+        if (node == 0)
+        {
+            memset(nodes, 0, sizeof(nodes));
+            nodeIdx = 0;
+        }
+        else
+        {
+            if(nodeIdx < sizeof(nodes)-1)
+            {
+                nodes[nodeIdx++] = node;
+            }
+        }
+    }
+
     uint8_t pingNodeId;
 
 private:
@@ -158,6 +174,8 @@ private:
     uint8_t fotaTimeout;
     uint32_t flashIndex;
     int8_t power;
+    uint8_t nodes[4];
+    uint8_t nodeIdx;
 
     // node type
     meshNodeType nodeType;
