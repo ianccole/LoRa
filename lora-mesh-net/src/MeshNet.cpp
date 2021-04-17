@@ -187,7 +187,8 @@ void MeshNet::loop(uint16_t wait_ms)
                     MeshNetPingRsp *a = (MeshNetPingRsp *)p;
                     sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n",a->power, a->rssi, a->snr);
                     printMsg(buffer);
-                    if ( a->gpsFix )
+                    // if ( a->gpsFix )
+                    if ( true )
                     {
                         long lat; 
                         long lon; 
