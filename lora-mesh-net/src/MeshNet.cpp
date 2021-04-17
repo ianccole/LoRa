@@ -187,8 +187,7 @@ void MeshNet::loop(uint16_t wait_ms)
                     MeshNetPingRsp *a = (MeshNetPingRsp *)p;
                     sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n",a->power, a->rssi, a->snr);
                     printMsg(buffer);
-                    // if ( a->gpsFix )
-                    if ( true )
+                    if ( a->gpsFix )
                     {
                         long lat; 
                         long lon; 
@@ -281,7 +280,7 @@ void MeshNet::sendPingRsp(uint8_t address)
     r->rssi = rf95.lastRssi();
     r->snr = rf95.lastSNR();
 
-    // r->gpsFix = gpsModule.gpsFix;
+    r->gpsFix = gpsModule.gpsFix;
 
     long lat; 
     long lon; 

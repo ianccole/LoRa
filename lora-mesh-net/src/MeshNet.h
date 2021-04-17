@@ -63,7 +63,7 @@ public:
         uint8_t             power;   ///< Transmit power of this message
         int8_t              rssi;    ///< RSSI in Ping response
         int8_t              snr;     ///< SNR in Ping response
-        // bool                gpsFix;
+        int8_t              gpsFix;
         unsigned long       date;
         unsigned long       time;
         long                lat;
