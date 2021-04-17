@@ -179,11 +179,11 @@ public:
     {
     }
 
-    void getPosition(long *latitude, long *longitude)
+    void getPosition(long *latitude, long *longitude, unsigned long *fix_age)
     {
     }
 
-    void getDateTime(unsigned long *date, unsigned long *time)
+    void getDateTime(unsigned long *date, unsigned long *time, unsigned long *time_age)
     {
     }
 
