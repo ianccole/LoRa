@@ -87,7 +87,7 @@ void resetUsingWatchdog()
 ////////////////////////////////////////////////////////////////////
 // Constructors
 MeshNet::MeshNet(RH_RF95& rf95)
-    : fotaTimeout(0), fotaActive(false), rf95(rf95), nodeIdx(0)
+    : pingNodeId(0), fotaTimeout(0), nodeIdx(0), fotaActive(false), rf95(rf95)
 {
 }
 
@@ -96,7 +96,7 @@ void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t
 	MeshNet::power = power;
     MeshNet::nodeType = (meshNodeType)nodeType;
 	manager = new RHMesh(rf95, thisAddress);
-    pingNodeId=0;
+    
     gpsModule.setup();
 
 #ifdef UseSD1306
@@ -151,10 +151,16 @@ void MeshNet::loop(uint16_t wait_ms)
 
     gpsModule.checkGPS();
 
+    // if(pingNodeId && uint8_t(currentSeconds - pingTimeout) > pingInterval)
+    // {
+    //     pingTimeout = currentSeconds;
+    //     pingNode(pingNodeId);
+    // }
     if (nodeIdx && uint8_t(currentSeconds - pingTimeout) > pingInterval)
     {
         uint8_t ii;
 
+        pingTimeout = currentSeconds;
         for(ii=0;ii<nodeIdx;ii++)
         {
             pingNode(nodes[ii]);    
