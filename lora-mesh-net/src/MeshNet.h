@@ -165,10 +165,7 @@ public:
         }
     }
 
-    void longRange(bool enable)
-    {
-        rf95.setModemConfig(enable ? RH_RF95::Bw125Cr48Sf4096 : RH_RF95::Bw125Cr45Sf128);
-    }
+    void MeshNet::setModemConfig(uint8_t mode);
 
     uint8_t pingNodeId;
 
