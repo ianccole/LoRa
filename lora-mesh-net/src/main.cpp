@@ -139,6 +139,13 @@ void handleData() {
             mesh.sendFix(nodeId);
             break;
         }
+
+        case 'L':
+        {
+            uint8_t longRange = atoi(&buffer[1]);
+            mesh.longRange(longRange);
+            break;
+        }
     }
   }
 }

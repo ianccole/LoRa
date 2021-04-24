@@ -165,6 +165,11 @@ public:
         }
     }
 
+    void longRange(bool enable)
+    {
+        rf95.setModemConfig(enable ? RH_RF95::Bw125Cr48Sf4096 : RH_RF95::Bw125Cr45Sf128);
+    }
+
     uint8_t pingNodeId;
 
 private:
