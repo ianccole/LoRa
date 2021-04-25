@@ -130,7 +130,7 @@ void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t
 	rf95.setTxPower(power);
 	rf95.setFrequency(freqMHz);
 	rf95.setCADTimeout(cad_timeout);
-
+    manager->setTimeout(1000);
 //   // long range configuration requires for on-air time
 //   boolean longRange = false;
 //   if (longRange)
@@ -182,7 +182,8 @@ void MeshNet::loop(uint16_t wait_ms)
     uint8_t id;
     uint8_t flags;
 
-	if (manager->recvfromAckTimeout((uint8_t *)&_tmpMessage, &len, wait_ms, &from, &dest, &id, &flags))
+	if (manager->recvfromAck((uint8_t *)&_tmpMessage, &len, &from, &dest, &id, &flags))
+	// if (manager->recvfromAckTimeout((uint8_t *)&_tmpMessage, &len, wait_ms, &from, &dest, &id, &flags))
 	{
 		blinkLed();
 
@@ -294,6 +295,10 @@ void MeshNet::sendPingRsp(uint8_t address)
     r->power = power;
     r->rssi = rf95.lastRssi();
     r->snr = rf95.lastSNR();
+    // r->ferror = rf95.frequencyError();
+
+    sprintf(buffer, "FreqError: %d\n", rf95.frequencyError());                        
+    Serial.print(buffer);
 
     uint8_t flags = gpsModule.gpsFix ? 1 : 0;
 
