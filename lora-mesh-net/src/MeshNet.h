@@ -165,7 +165,7 @@ public:
         }
     }
 
-    void MeshNet::setModemConfig(uint8_t mode);
+    void setModemConfig(uint8_t mode);
 
     uint8_t pingNodeId;
 
