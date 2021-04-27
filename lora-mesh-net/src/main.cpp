@@ -142,6 +142,14 @@ void handleData() {
 
         case 'L':
         {
+
+            uint8_t mode = atoi(&buffer[1]);
+            mesh.setModemConfig(mode);
+            break;
+        }
+
+        case 'M':
+        {
             // L <node> <mode>
             char * idx;
             
