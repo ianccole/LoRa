@@ -10,7 +10,7 @@
 #include <RHMesh.h>
 #include <RH_RF95.h>
 #define FREQMHZ 434.4
-#define POWER 20
+#define POWER 5
 #define CAD_TIMEOUT 500
 
 #include <MeshNet.h>
@@ -142,7 +142,16 @@ void handleData() {
 
         case 'L':
         {
-            uint8_t mode = atoi(&buffer[1]);
+            // L <node> <mode>
+            char * idx;
+            
+            idx = strtok(buffer, " ");
+            uint8_t nodeId = atoi(idx);
+            
+            idx = strtok(NULL, " ");
+            uint8_t mode = atoi(idx);
+            
+            mesh.sendModReq(nodeId, mode, 0, MeshNet::modreq_mode);
             mesh.setModemConfig(mode);
             break;
         }

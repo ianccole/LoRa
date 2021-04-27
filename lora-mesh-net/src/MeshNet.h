@@ -10,6 +10,10 @@
 #define MESH_NET_MESSAGE_TYPE_FOTA_RESPONSE                  0x53
 #define MESH_NET_MESSAGE_TYPE_APP_REQUEST                    0x54
 #define MESH_NET_MESSAGE_TYPE_APP_RESPONSE                   0x55
+#define MESH_NET_MESSAGE_TYPE_FIX_REQUEST                    0x56
+#define MESH_NET_MESSAGE_TYPE_FIX_RESPONSE                   0x57
+#define MESH_NET_MESSAGE_TYPE_MOD_REQUEST                    0x58
+#define MESH_NET_MESSAGE_TYPE_MOD_RESPONSE                   0x59
 
 #define seconds() (millis()/1000)
 
@@ -63,15 +67,55 @@ public:
         uint8_t             power;   ///< Transmit power of this message
         int8_t              rssi;    ///< RSSI in Ping response
         int8_t              snr;     ///< SNR in Ping response
-        // int                 ferror;
-        // int8_t              gpsFix;
+        int8_t              ppm;     ///< Fc ppm error
+    } MeshNetPingRsp;
+
+    typedef struct
+    {
+        MeshMessageHeader   header;  ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
+    } MeshNetFixReq;
+
+    typedef struct
+    {
+        MeshMessageHeader   header;  ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
+        int                 ferror;
+        int8_t              gpsFix;
         unsigned long       date;
         unsigned long       time;
         long                lat;
         long                lon;
         unsigned long       fix_age;
         unsigned long       time_age;
-    } MeshNetPingRsp;
+    } MeshNetFixRsp;
+
+    /*-----------------------------
+    | flags:
+    |0 1 2 3 4 5 6 7 
+    +-+-+-+-+-+-+-+-+
+    |P|M|
+    |W|O|
+    |R|D|
+    +-+-+-+-+-+-+-+-+
+    | PWR Action power request
+    | MOD Action mode request
+    +------------------------------*/
+    enum MeshNetModReqFlags
+    {
+        modreq_none        = 0,
+        modreq_power       = 1,
+        modreq_mode        = 2
+    };
+    typedef struct
+    {
+        MeshMessageHeader   header;  ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
+        uint8_t             mode;    ///< requested mode
+        uint8_t             power;   ///< requested Transmit power
+    } MeshNetModReq;
+
+    typedef struct
+    {
+        MeshMessageHeader   header;  ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
+    } MeshNetModRsp;
 
     typedef struct 
     {
@@ -124,6 +168,12 @@ public:
     void sendFix(uint8_t address);
     void sendFOTAREQ(uint8_t address, uint16_t seqnum, char *buf);
     void sendFOTARSP(uint8_t address, uint16_t seqnum, uint8_t flags);
+    void sendFixReq(uint8_t address,uint8_t flags=0);
+    void sendFixRsp(uint8_t address);
+
+    void sendModReq(uint8_t address, uint8_t mode, uint8_t power, uint8_t flags=0);
+    void sendModRsp(uint8_t address, uint8_t flags=0);
+    void handleModReq(MeshNetModReq *a, uint8_t flags, uint8_t from);
 
     int16_t lastRssi()
     {
@@ -177,6 +227,7 @@ private:
     uint8_t fotaTimeout;
     uint32_t flashIndex;
     int8_t power;
+    float _freqMHz;
     uint8_t nodes[4];
     uint8_t nodeIdx;
 

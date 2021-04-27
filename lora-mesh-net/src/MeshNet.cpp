@@ -126,11 +126,11 @@ void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t
 #ifdef LED_BUILTIN
 	pinMode(LED_BUILTIN, OUTPUT);
 #endif
-
+    _freqMHz = freqMHz;
 	rf95.setTxPower(power);
-	rf95.setFrequency(freqMHz);
+	rf95.setFrequency(_freqMHz);
 	rf95.setCADTimeout(cad_timeout);
-    manager->setTimeout(1000);
+    manager->setTimeout(1500);
 //   // long range configuration requires for on-air time
 //   boolean longRange = false;
 //   if (longRange)
@@ -203,21 +203,6 @@ void MeshNet::loop(uint16_t wait_ms)
                     MeshNetPingRsp *a = (MeshNetPingRsp *)p;
                     sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n",a->power, a->rssi, a->snr);
                     printMsg(buffer);
-                    if ( flags && 0x01 )
-                    {
-                        long lat; 
-                        long lon; 
-                        unsigned long date;
-                        unsigned long time; 
-
-                        lat = ntohl(a->lat);
-                        lon = ntohl(a->lon);
-                        date = ntohl(a->date);
-                        time = ntohl(a->time);
-
-                        sprintf(buffer, "Date: %lu, Time: %lu, LAT: %ld, LON: %ld\n", date, time, lat, lon);                        
-                        printMsg(buffer);
-                    }
                     break;
                 }
                 case MESH_NET_MESSAGE_TYPE_PING_REQUEST:
@@ -229,15 +214,6 @@ void MeshNet::loop(uint16_t wait_ms)
                     printMsg(buffer);
 
                     sendPingRsp(from);
-
-                    // MeshNetPingRsp *b;
-                    // b = (MeshNetPingRsp *)_tmpMessage;
-                    // b->header.msgType = MESH_NET_MESSAGE_TYPE_PING_RESPONSE;
-                    // b->power = power;
-                    // b->rssi = rf95.lastRssi();
-                    // b->snr = rf95.lastSNR();
-
-                    // sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), from);
                     break;
                 }
 
@@ -266,16 +242,34 @@ void MeshNet::loop(uint16_t wait_ms)
                     Serial.println(a->data);
 
                     sendPingRsp(from);
+                    break;
+                }
 
-                    // MeshNetPingRsp *r;
-                    // r = (MeshNetPingRsp *)_tmpMessage;
-                    // r->header.msgType = MESH_NET_MESSAGE_TYPE_PING_RESPONSE;
-                    // r->power = power;
-                    // r->rssi = rf95.lastRssi();
-                    // r->snr = rf95.lastSNR();
+                case MESH_NET_MESSAGE_TYPE_FIX_RESPONSE:
+                {
+                    MeshNetFixRsp *a = (MeshNetFixRsp *)p;
+                    if ( flags && 0x01 )
+                    {
+                        long lat; 
+                        long lon; 
+                        unsigned long date;
+                        unsigned long time; 
 
-                    // sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), from);
+                        lat = ntohl(a->lat);
+                        lon = ntohl(a->lon);
+                        date = ntohl(a->date);
+                        time = ntohl(a->time);
 
+                        sprintf(buffer, "Date: %lu, Time: %lu, LAT: %ld, LON: %ld\n", date, time, lat, lon);                        
+                        printMsg(buffer);
+                    }
+                    break;
+                }
+
+                case MESH_NET_MESSAGE_TYPE_MOD_REQUEST:
+                {
+                    MeshNetModReq *a = (MeshNetModReq *)p;
+                    handleModReq(a, flags, from);
                     break;
                 }
 
@@ -295,10 +289,27 @@ void MeshNet::sendPingRsp(uint8_t address)
     r->power = power;
     r->rssi = rf95.lastRssi();
     r->snr = rf95.lastSNR();
-    // r->ferror = rf95.frequencyError();
 
-    sprintf(buffer, "FreqError: %d\n", rf95.frequencyError());                        
-    Serial.print(buffer);
+    int ferror = rf95.frequencyError();
+    r->ppm = (ferror / _freqMHz);
+    Serial.println(r->ppm);
+
+    uint8_t flags = 0;
+    sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), address, flags);
+}
+
+void MeshNet::sendFixReq(uint8_t address,uint8_t flags)
+{
+    MeshNetFixReq *a = (MeshNetFixReq *)_tmpMessage;
+    a->header.msgType = MESH_NET_MESSAGE_TYPE_FIX_REQUEST;    
+	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetFixReq), address, flags);
+}
+
+void MeshNet::sendFixRsp(uint8_t address)
+{
+    MeshNetFixRsp *r;
+    r = (MeshNetFixRsp *)_tmpMessage;
+    r->header.msgType = MESH_NET_MESSAGE_TYPE_FIX_RESPONSE;
 
     uint8_t flags = gpsModule.gpsFix ? 1 : 0;
 
@@ -326,6 +337,44 @@ void MeshNet::sendPingRsp(uint8_t address)
     Serial.print(buffer);
 
     sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), address, flags);
+}
+
+void MeshNet::sendModReq(uint8_t address, uint8_t mode, uint8_t power, uint8_t flags)
+{
+    MeshNetModReq *a = (MeshNetModReq *)_tmpMessage;
+    a->header.msgType = MESH_NET_MESSAGE_TYPE_MOD_REQUEST;    
+    a->mode = mode;
+    a->power = power;
+	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetModReq), address, flags);
+
+    // if (flags && modreq_mode)
+    // {
+    //     setModemConfig(mode);
+    // }
+}
+
+void MeshNet::sendModRsp(uint8_t address, uint8_t flags)
+{
+    MeshNetModRsp *a = (MeshNetModRsp *)_tmpMessage;
+    a->header.msgType = MESH_NET_MESSAGE_TYPE_MOD_RESPONSE;    
+	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetModRsp), address, flags);
+}
+
+void MeshNet::handleModReq(MeshNetModReq *a, uint8_t flags, uint8_t from)
+{
+    if (flags && modreq_power)
+    {
+        setPower(a->power);
+        sprintf(buffer, "Set power: %d\n", a->power);                        
+        Serial.print(buffer);
+    }
+    if (flags && modreq_mode)
+    {
+        setModemConfig(a->mode);
+        sprintf(buffer, "Set Mode: %d\n", a->mode);                        
+        Serial.print(buffer);
+    }
+    sendModRsp(from);
 }
 
 uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uint8_t flags)
