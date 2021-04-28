@@ -65,19 +65,23 @@ void recvWithEndMarker() {
 void handleData() {
   if (newData == true) 
   {
+    char * s;
     newData = false;
+    s = strtok(buffer, " ");
 
-    switch(buffer[0])
+    switch(*s)
     {
         case 'N':
-            Serial.println(EEPROM.read(0));
-            nodeInfo.nodeId = atoi(&buffer[1]);
+            Serial.println(EEPROM.read(0), HEX);
+            s = strtok(NULL, " ");
+            nodeInfo.nodeId = atoi(s);
             sprintf(buffer, "Node id: %d\n", nodeInfo.nodeId);
             Serial.print(buffer);
             break;
 
         case 'T':
-            nodeInfo.nodeType = atoi(&buffer[1]);
+            s = strtok(NULL, " ");
+            nodeInfo.nodeType = atoi(s);
             sprintf(buffer, "Node type: %d\n", nodeInfo.nodeType);
             Serial.print(buffer);
             break;
@@ -93,17 +97,18 @@ void handleData() {
 
         case 'P':
         {
-            uint8_t nodeId = atoi(&buffer[1]);
+            s = strtok(NULL, " ");
+            uint8_t nodeId = atoi(s);
             sprintf(buffer, "Ping Node id: %d\n", nodeId);
             Serial.print(buffer);
-            // mesh.pingNodeId = nodeId;
             mesh.addNode(nodeId);
             break;
         }
 
         case 'D':
         {
-            int8_t powerdBm = atoi(&buffer[1]);
+            s = strtok(NULL, " ");
+            int8_t powerdBm = atoi(s);
             sprintf(buffer, "Power: %d dBm\n", powerdBm);
             Serial.print(buffer);
             mesh.setPower(powerdBm);
@@ -117,10 +122,9 @@ void handleData() {
         // F node seq :100030000C94AD000C94AD000C94AD000C94AD008C
         case 'F':
         {   
-            char *s;
             uint8_t nodeId;
             uint16_t seqnum;
-            s = strtok(&buffer[1], " ");
+            s = strtok(NULL, " ");
             nodeId = atoi(s);
             // Serial.println(nodeId, DEC);
             s = strtok(NULL, " ");
@@ -135,7 +139,8 @@ void handleData() {
 #endif
         case 'G':
         {
-            uint8_t nodeId = atoi(&buffer[1]);
+            s = strtok(NULL, " ");
+            uint8_t nodeId = atoi(s);
             mesh.sendFix(nodeId);
             break;
         }
@@ -143,21 +148,22 @@ void handleData() {
         case 'L':
         {
 
-            uint8_t mode = atoi(&buffer[1]);
+            s = strtok(NULL, " ");
+            uint8_t mode = atoi(s);
             mesh.setModemConfig(mode);
             break;
         }
 
         case 'M':
         {
-            // L <node> <mode>
-            char * idx;
+            // M <node> <mode>            
+            s = strtok(NULL, " ");
+            uint8_t nodeId = atoi(s);
+            Serial.println(nodeId, DEC);
             
-            idx = strtok(buffer, " ");
-            uint8_t nodeId = atoi(idx);
-            
-            idx = strtok(NULL, " ");
-            uint8_t mode = atoi(idx);
+            s = strtok(NULL, " ");
+            uint8_t mode = atoi(s);
+            Serial.println(mode, DEC);
             
             mesh.sendModReq(nodeId, mode, 0, MeshNet::modreq_mode);
             mesh.setModemConfig(mode);
@@ -174,7 +180,7 @@ void setup()
     nodeInfo.nodeId = EEPROM.read(0);
     nodeInfo.nodeType = EEPROM.read(1);
 
-    sprintf(buffer, "Node id: %d, Node type: %d\n", nodeInfo.nodeId, nodeInfo.nodeType);
+    sprintf(buffer, "Node id: 0x%x Node type: %d\n", nodeInfo.nodeId, nodeInfo.nodeType);
     Serial.print(buffer);
 
     mesh.setup(nodeInfo.nodeId, nodeInfo.nodeType, FREQMHZ, POWER, CAD_TIMEOUT);
