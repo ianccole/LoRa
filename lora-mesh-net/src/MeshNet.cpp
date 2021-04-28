@@ -248,7 +248,7 @@ void MeshNet::loop(uint16_t wait_ms)
                 case MESH_NET_MESSAGE_TYPE_FIX_RESPONSE:
                 {
                     MeshNetFixRsp *a = (MeshNetFixRsp *)p;
-                    if ( flags && 0x01 )
+                    if ( flags & 0x01 )
                     {
                         long lat; 
                         long lon; 
@@ -276,12 +276,13 @@ void MeshNet::loop(uint16_t wait_ms)
                 case MESH_NET_MESSAGE_TYPE_MOD_RESPONSE:
                 {
                     Serial.println("Mod response");
-                    if (flags && modreq_mode)
+                    if (flags & modreq_mode)
                     {
                         sprintf(buffer, "Set Mode: %d\n", _mode);                        
                         printMsg(buffer);
                         setModemConfig(_mode);
                     }
+                    break;
                 }
 
                 default:
@@ -352,7 +353,7 @@ void MeshNet::sendFixRsp(uint8_t address)
 
 void MeshNet::sendModReq(uint8_t address, uint8_t mode, uint8_t power, uint8_t flags)
 {
-    if (flags && modreq_mode)
+    if (flags & modreq_mode)
     {
         _mode = mode;
     }
@@ -363,7 +364,7 @@ void MeshNet::sendModReq(uint8_t address, uint8_t mode, uint8_t power, uint8_t f
     a->power = power;
 	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetModReq), address, flags);
 
-    // if (flags && modreq_mode)
+    // if (flags & modreq_mode)
     // {
     //     setModemConfig(mode);
     // }
@@ -379,13 +380,13 @@ void MeshNet::sendModRsp(uint8_t address, uint8_t flags)
 void MeshNet::handleModReq(MeshNetModReq *a, uint8_t flags, uint8_t from)
 {
     Serial.println("handleModReq");
-    if (flags && modreq_power)
+    if (flags & modreq_power)
     {
         setPower(a->power);
         sprintf(buffer, "Set power: %d\n", a->power);                        
         Serial.print(buffer);
     }
-    if (flags && modreq_mode)
+    if (flags & modreq_mode)
     {
         setModemConfig(a->mode);
         sprintf(buffer, "Set Mode: %d\n", a->mode);                        
