@@ -228,6 +228,7 @@ private:
     uint32_t flashIndex;
     int8_t power;
     float _freqMHz;
+    uint8_t _mode;
     uint8_t nodes[4];
     uint8_t nodeIdx;
 
