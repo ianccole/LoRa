@@ -166,7 +166,6 @@ void handleData() {
             Serial.println(mode, DEC);
             
             mesh.sendModReq(nodeId, mode, 0, MeshNet::modreq_mode);
-            mesh.setModemConfig(mode);
             break;
         }
     }

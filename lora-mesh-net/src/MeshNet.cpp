@@ -388,11 +388,11 @@ void MeshNet::handleModReq(MeshNetModReq *a, uint8_t flags, uint8_t from)
     }
     if (flags & modreq_mode)
     {
+        sendModRsp(from, flags);
         setModemConfig(a->mode);
         sprintf(buffer, "Set Mode: %d\n", a->mode);                        
         Serial.print(buffer);
     }
-    sendModRsp(from, flags);
 }
 
 uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uint8_t flags)
