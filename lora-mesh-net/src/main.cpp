@@ -168,6 +168,21 @@ void handleData() {
             mesh.sendModReq(nodeId, mode, 0, MeshNet::modreq_mode);
             break;
         }
+
+        case 'K':
+        {
+            // W <node> <power>            
+            s = strtok(NULL, " ");
+            uint8_t nodeId = atoi(s);
+            Serial.println(nodeId, DEC);
+            
+            s = strtok(NULL, " ");
+            uint8_t power = atoi(s);
+            Serial.println(power, DEC);
+            
+            mesh.sendModReq(nodeId, 0, power, MeshNet::modreq_power);
+            break;
+        }
     }
   }
 }

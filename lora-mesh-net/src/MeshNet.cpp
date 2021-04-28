@@ -275,7 +275,7 @@ void MeshNet::loop(uint16_t wait_ms)
 
                 case MESH_NET_MESSAGE_TYPE_MOD_RESPONSE:
                 {
-                    Serial.println("Mod response");
+                    Serial.println(F("Mod response"));
                     if (flags & modreq_mode)
                     {
                         sprintf(buffer, "Set Mode: %d\n", _mode);                        
@@ -286,7 +286,7 @@ void MeshNet::loop(uint16_t wait_ms)
                 }
 
                 default:
-                    Serial.println("Unhandled: message");
+                    Serial.println(F("Unhandled: message"));
                     break;
             }
         }
@@ -379,7 +379,7 @@ void MeshNet::sendModRsp(uint8_t address, uint8_t flags)
 
 void MeshNet::handleModReq(MeshNetModReq *a, uint8_t flags, uint8_t from)
 {
-    Serial.println("handleModReq");
+    Serial.println(F("handleModReq"));
     if (flags & modreq_power)
     {
         setPower(a->power);
@@ -404,7 +404,7 @@ uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uin
     switch(error)
     {
         case RH_ROUTER_ERROR_NO_ROUTE:
-            Serial.println("no route");
+            Serial.println(F("no route"));
             break;
 
         case RH_ROUTER_ERROR_NONE:
@@ -479,10 +479,10 @@ void MeshNet::handleFOTA(MeshNetFOTAMessageReq *msg, uint8_t from)
 {
     if (msg->headerFOTA.sequence == 0)
     {
-        Serial.print("Erasing Flash chip ... ");
+        Serial.print(F("Erasing Flash chip ... "));
         flash.blockErase32K(0);
         while(flash.busy());
-        Serial.println("DONE");        
+        Serial.println(F("DONE"));        
         fotaActive = true;
         flashIndex = FLASHHDRLEN; // reserve space for flash header
     }
@@ -538,7 +538,7 @@ bool MeshNet::burnHexLine(const uint8_t *pLine)
         hexConv(pLine, hexBuffer[bytesInLine++]);
     }
 
-    Serial.print("Bytes: ");
+    Serial.print(F("Bytes: "));
     Serial.println(bytesInLine);
 
     byte checksum = 0;
