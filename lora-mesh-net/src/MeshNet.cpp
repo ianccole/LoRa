@@ -107,9 +107,9 @@ void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t
 #endif
 
 #ifdef UseSD1306
-    Wire.begin();
-    Wire.beginTransmission(SD1306_Address);
-    Wire.endTransmission();
+    // Wire.begin();
+    // Wire.beginTransmission(SD1306_Address);
+    // Wire.endTransmission();
 
     disp.begin(&Adafruit128x64, SD1306_Address);
     disp.setFont(Adafruit5x7);
