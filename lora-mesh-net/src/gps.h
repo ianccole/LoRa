@@ -146,89 +146,10 @@ private:
     unsigned long _start;
 
 };
-#else
 
-class GPSModule
-{
-public:
-    enum class gps_state
-    {
-        gps_on,
-        gps_on_first_fix,
-        gps_on_fix,
-        gps_off
-    };
-
-    /// Constructor.
-    GPSModule() : 
-        ttff(0),
-        gpsFix(false),
-        lat(0),
-        lon(0),
-        fix_age(0),
-        date(0),
-        time(0),
-        _state(gps_state::gps_off)
-        
-    {}
-
-    void setup()
-    {
-    }
-
-    bool checkGPS()
-    {
-        return gpsFix;
-    }
-
-    void getFixStr(char* buffer)
-    {
-    }
-
-    void getPosition(long *latitude, long *longitude, unsigned long *fix_age)
-    {
-        // *latitude = 0x11;
-        // *longitude = 0x22;
-        // *fix_age = 0x33;
-    }
-
-    void getDateTime(unsigned long *date, unsigned long *time, unsigned long *time_age)
-    {
-        // *date = 0x44;
-        // *time = 0x55;
-        // *time_age = 0x66;
-    }
-
-    void powerOn()
-    {
-    }
-
-    void powerOff()
-    {
-    }
-
-    gps_state state()
-    {
-        return _state;
-    }
-
-    unsigned long ttff;
-    bool gpsFix;
-    long lat;
-    long lon;
-    unsigned long fix_age;
-    unsigned long date;
-    unsigned long time;
-
-private:
-    gps_state _state;
-    // bool _gpsFix;
-    unsigned long _start;
-};
+static GPSModule gpsModule;
 
 #endif
 
-
-static GPSModule gpsModule;
 
 #endif
