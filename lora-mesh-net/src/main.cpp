@@ -32,7 +32,7 @@ struct nodeInfo
   uint8_t RFU2;
 } nodeInfo;
 
-const byte numChars = 64;
+const byte numChars = 32;
 char buffer[numChars];   // an array to store the received data
 bool newData = false;
 bool serialData = false;

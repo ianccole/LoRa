@@ -23,8 +23,8 @@ SPIFlash flash(SS_FLASHMEM);
 
 // RH_RF95 MeshNet::rf95;
 
-static char _tmpMessage[MESH_NET_MAX_MESSAGE_LEN];
-static char buffer[50];
+MeshNet::MeshNetApplicationMessage MeshNet::_tmpMessage;
+char MeshNet::buffer[50];
 
 int freeMem()
 {
@@ -102,7 +102,9 @@ void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t
     MeshNet::nodeType = (meshNodeType)nodeType;
 	manager = new RHMesh(rf95, thisAddress);
     
+#if defined(NODE_HAVE_GPS)
     gpsModule.setup();
+#endif
 
 #ifdef UseSD1306
     Wire.begin();
@@ -154,8 +156,9 @@ void MeshNet::loop(uint16_t wait_ms)
 	uint8_t from;
     uint8_t currentSeconds = seconds();
 
+#if defined(NODE_HAVE_GPS)
     gpsModule.checkGPS();
-
+#endif
     // if(pingNodeId && uint8_t(currentSeconds - pingTimeout) > pingInterval)
     // {
     //     pingTimeout = currentSeconds;
@@ -175,7 +178,7 @@ void MeshNet::loop(uint16_t wait_ms)
     if(fotaActive && uint8_t(currentSeconds - fotaTimeout) > fotaInterval)
     {
         fotaActive = false;
-        Serial.println("FOTA timeout");
+        Serial.println(F("FOTA timeout"));
     }
 #endif
 	uint8_t dest;
@@ -237,7 +240,7 @@ void MeshNet::loop(uint16_t wait_ms)
 #endif
                 case MESH_NET_MESSAGE_TYPE_APP_REQUEST:
                 {
-                    MesNetApplicationMessage *a = (MesNetApplicationMessage *)p;
+                    MeshNetApplicationMessage *a = (MeshNetApplicationMessage *)p;
                     a->data[len - sizeof(MeshMessageHeader)] = '\0';
                     Serial.println(a->data);
 
@@ -296,7 +299,7 @@ void MeshNet::loop(uint16_t wait_ms)
 void MeshNet::sendPingRsp(uint8_t address)
 {
     MeshNetPingRsp *r;
-    r = (MeshNetPingRsp *)_tmpMessage;
+    r = (MeshNetPingRsp *)&_tmpMessage;
     r->header.msgType = MESH_NET_MESSAGE_TYPE_PING_RESPONSE;
     r->power = power;
     r->rssi = rf95.lastRssi();
@@ -312,11 +315,12 @@ void MeshNet::sendPingRsp(uint8_t address)
 
 void MeshNet::sendFixReq(uint8_t address,uint8_t flags)
 {
-    MeshNetFixReq *a = (MeshNetFixReq *)_tmpMessage;
+    MeshNetFixReq *a = (MeshNetFixReq *)&_tmpMessage;
     a->header.msgType = MESH_NET_MESSAGE_TYPE_FIX_REQUEST;    
-	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetFixReq), address, flags);
+	sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetFixReq), address, flags);
 }
 
+#if defined(NODE_HAVE_GPS)
 void MeshNet::sendFixRsp(uint8_t address)
 {
     MeshNetFixRsp *r;
@@ -350,6 +354,7 @@ void MeshNet::sendFixRsp(uint8_t address)
 
     sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), address, flags);
 }
+#endif
 
 void MeshNet::sendModReq(uint8_t address, uint8_t mode, uint8_t power, uint8_t flags)
 {
@@ -358,11 +363,11 @@ void MeshNet::sendModReq(uint8_t address, uint8_t mode, uint8_t power, uint8_t f
         _mode = mode;
     }
 
-    MeshNetModReq *a = (MeshNetModReq *)_tmpMessage;
+    MeshNetModReq *a = (MeshNetModReq *)&_tmpMessage;
     a->header.msgType = MESH_NET_MESSAGE_TYPE_MOD_REQUEST;    
     a->mode = mode;
     a->power = power;
-	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetModReq), address, flags);
+	sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetModReq), address, flags);
 
     // if (flags & modreq_mode)
     // {
@@ -372,9 +377,9 @@ void MeshNet::sendModReq(uint8_t address, uint8_t mode, uint8_t power, uint8_t f
 
 void MeshNet::sendModRsp(uint8_t address, uint8_t flags)
 {
-    MeshNetModRsp *a = (MeshNetModRsp *)_tmpMessage;
+    MeshNetModRsp *a = (MeshNetModRsp *)&_tmpMessage;
     a->header.msgType = MESH_NET_MESSAGE_TYPE_MOD_RESPONSE;    
-	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetModRsp), address, flags);
+	sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetModRsp), address, flags);
 }
 
 void MeshNet::handleModReq(MeshNetModReq *a, uint8_t flags, uint8_t from)
@@ -421,24 +426,25 @@ uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uin
 
 void MeshNet::pingNode(uint8_t address, uint8_t flags)
 {
-    MeshNetPingReq *a = (MeshNetPingReq *)_tmpMessage;
+    MeshNetPingReq *a = (MeshNetPingReq *)&_tmpMessage;
     a->header.msgType = MESH_NET_MESSAGE_TYPE_PING_REQUEST;
 	a->power = power;
     
-	sendtoWaitStats((uint8_t*)_tmpMessage, sizeof(MeshNet::MeshNetPingReq), address, flags);
+	sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingReq), address, flags);
 }
 
 void MeshNet::appMessage(uint8_t address, char * buf, uint8_t flags)
 {
-    MesNetApplicationMessage *a = (MesNetApplicationMessage *)_tmpMessage;
+    MeshNetApplicationMessage *a = (MeshNetApplicationMessage *)&_tmpMessage;
     a->header.msgType = MESH_NET_MESSAGE_TYPE_APP_REQUEST;
     uint8_t len = strlen(buf) + sizeof(MeshMessageHeader);
     memcpy(a->data, buf, strlen(buf));       
-	sendtoWaitStats((uint8_t*)_tmpMessage, len, address, flags);
+	sendtoWaitStats((uint8_t*)&_tmpMessage, len, address, flags);
 }
 
 void MeshNet::sendFix(uint8_t address)
 {
+#if defined(NODE_HAVE_GPS)
     if (gpsModule.gpsFix)
     {
         gpsModule.getFixStr(buffer);
@@ -449,6 +455,7 @@ void MeshNet::sendFix(uint8_t address)
     {
         Serial.println(F("No Fix"));
     }
+#endif
 }
 
 #ifdef FOTA_SERVER
