@@ -41,8 +41,8 @@ public:
     typedef struct
     {
         MeshMessageHeader   header; ///< msgType = RH_MESH_MESSAGE_TYPE_APPLICATION 
-        char                data[MESH_NET_MAX_MESSAGE_LEN - sizeof(MeshMessageHeader)]; ///< Application layer payload data
-    } MesNetApplicationMessage;
+        char                data[MESH_NET_MAX_MESSAGE_LEN]; ///< Application layer payload data
+    } MeshNetApplicationMessage;
 
     /*-----------------------------
     | flags:
@@ -221,6 +221,10 @@ public:
     uint8_t pingNodeId;
 
 private:
+    /// Temporary mesage buffer
+    static MeshNetApplicationMessage _tmpMessage;
+    static char buffer[50];
+
     const uint8_t pingInterval = 5;
     const uint8_t fotaInterval = 15;
     uint8_t pingTimeout;
