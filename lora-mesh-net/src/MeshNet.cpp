@@ -37,11 +37,11 @@ int freeMem()
 void printMsg(const char * msg, bool clear=false)
 {
     // disp.setCursor(0, row);
-// #ifdef UseSD1306
-//     if(clear)
-//         disp.clear();
-//     disp.print(msg);
-// #endif
+#ifdef UseSD1306
+    if(clear)
+        disp.clear();
+    disp.print(msg);
+#endif
     Serial.print(msg);
 }
 
@@ -139,7 +139,7 @@ void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t
     Wire.endTransmission();
 
     disp.begin(&Adafruit128x64, SD1306_Address);
-    disp.setFont(Callibri11_bold);
+    disp.setFont(System5x7);
     disp.set1X();
     disp.setScrollMode(SCROLL_MODE_AUTO);
 #endif
@@ -151,7 +151,7 @@ void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t
 	}
 
     sprintf(buffer, "Ready\n(mem = %d)\n",freeMem());
-    printMsg1(buffer, true);
+    printMsg(buffer, true);
 
 #ifdef LED_BUILTIN
 	pinMode(LED_BUILTIN, OUTPUT);
@@ -221,7 +221,7 @@ void MeshNet::loop(uint16_t wait_ms)
         int16_t rssi = rf95.lastRssi();
 
 		blinkLed();
-        displayStats(rssi, snr);
+        // displayStats(rssi, snr);
 
         MeshMessageHeader *p = (MeshMessageHeader *)&_tmpMessage;
 
@@ -344,14 +344,14 @@ void MeshNet::sendPingRsp(uint8_t address)
     Serial.println(r->ppm);
 
     uint8_t flags = 0;
-    sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), address, flags);
+    sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), address, flags);
 }
 
 void MeshNet::sendFixReq(uint8_t address,uint8_t flags)
 {
     MeshNetFixReq *a = (MeshNetFixReq *)&_tmpMessage;
     a->header.msgType = MESH_NET_MESSAGE_TYPE_FIX_REQUEST;    
-	sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetFixReq), address, flags);
+	sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetFixReq), address, flags);
 }
 
 #if defined(NODE_HAVE_GPS)
@@ -386,7 +386,7 @@ void MeshNet::sendFixRsp(uint8_t address)
     sprintf(buffer, "Date: %lu, Time: %lu, LAT: %ld, LON: %ld\n", date, time, lat, lon);                        
     Serial.print(buffer);
 
-    sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), address, flags);
+    sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), address, flags);
 }
 #endif
 
@@ -401,7 +401,7 @@ void MeshNet::sendModReq(uint8_t address, uint8_t mode, uint8_t power, uint8_t f
     a->header.msgType = MESH_NET_MESSAGE_TYPE_MOD_REQUEST;    
     a->mode = mode;
     a->power = power;
-	sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetModReq), address, flags);
+	sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetModReq), address, flags);
 
     // if (flags & modreq_mode)
     // {
@@ -413,7 +413,7 @@ void MeshNet::sendModRsp(uint8_t address, uint8_t flags)
 {
     MeshNetModRsp *a = (MeshNetModRsp *)&_tmpMessage;
     a->header.msgType = MESH_NET_MESSAGE_TYPE_MOD_RESPONSE;    
-	sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetModRsp), address, flags);
+	sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetModRsp), address, flags);
 }
 
 void MeshNet::handleModReq(MeshNetModReq *a, uint8_t flags, uint8_t from)
@@ -434,11 +434,11 @@ void MeshNet::handleModReq(MeshNetModReq *a, uint8_t flags, uint8_t from)
     }
 }
 
-uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uint8_t flags)
+uint8_t MeshNet::sendtoWaitStats(MeshNetApplicationMessage &msg, uint8_t len, uint8_t address, uint8_t flags)
 {
 	blinkLed();
 
-	uint8_t error = manager->sendtoWait(buf, len, address, flags);
+	uint8_t error = manager->sendtoWait((uint8_t*)&msg, len, address, flags);
 
     switch(error)
     {
@@ -449,7 +449,8 @@ uint8_t MeshNet::sendtoWaitStats(uint8_t *buf, uint8_t len, uint8_t address, uin
         case RH_ROUTER_ERROR_NONE:
         {
             RHRouter::RoutingTableEntry *route = manager->getRouteTo(address);
-            sprintf(buffer, "TxAck:%d RSSI:%d\nSNR:%d Hop:%d\n", address, rf95.lastRssi(), rf95.lastSNR(), route->next_hop);
+            // sprintf(buffer, "TxAck:%d RSSI:%d\nSNR:%d Hop:%d\n", address, rf95.lastRssi(), rf95.lastSNR(), route->next_hop);
+            sprintf(buffer, "%x: RSSI:%d SNR:%d %d(%d)\n", msg.header.msgType, rf95.lastRssi(), rf95.lastSNR(), address, route->next_hop);
             printMsg(buffer);
         }
         break;
@@ -464,7 +465,7 @@ void MeshNet::pingNode(uint8_t address, uint8_t flags)
     a->header.msgType = MESH_NET_MESSAGE_TYPE_PING_REQUEST;
 	a->power = power;
     
-	sendtoWaitStats((uint8_t*)&_tmpMessage, sizeof(MeshNet::MeshNetPingReq), address, flags);
+	sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetPingReq), address, flags);
 }
 
 void MeshNet::appMessage(uint8_t address, char * buf, uint8_t flags)
@@ -473,7 +474,7 @@ void MeshNet::appMessage(uint8_t address, char * buf, uint8_t flags)
     a->header.msgType = MESH_NET_MESSAGE_TYPE_APP_REQUEST;
     uint8_t len = strlen(buf) + sizeof(MeshMessageHeader);
     memcpy(a->data, buf, strlen(buf));       
-	sendtoWaitStats((uint8_t*)&_tmpMessage, len, address, flags);
+	sendtoWaitStats(_tmpMessage, len, address, flags);
 }
 
 void MeshNet::sendFix(uint8_t address)
