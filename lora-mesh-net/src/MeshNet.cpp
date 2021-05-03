@@ -34,25 +34,12 @@ int freeMem()
   return freeMemory();
 }
 
-void printMsg(const char * msg, bool clear=false)
+void printMsg(const char * msg)
 {
     // disp.setCursor(0, row);
 #ifdef UseSD1306
-    if(clear)
-        disp.clear();
-    disp.print(msg);
-#endif
-    Serial.print(msg);
-}
-
-void printMsg1(const char * msg, bool clear=false)
-{
-    // disp.setCursor(0, row);
-#ifdef UseSD1306
-    if(clear)
-    {
-        disp.clear();
-    }
+    // if(clear)
+    //     disp.clear();
     disp.print(msg);
 #endif
     Serial.print(msg);
@@ -150,8 +137,8 @@ void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t
         return;
 	}
 
-    sprintf(buffer, "Ready\n(mem = %d)\n",freeMem());
-    printMsg(buffer, true);
+    sprintf(buffer, "Ready (mem = %d)\n",freeMem());
+    printMsg(buffer);
 
 #ifdef LED_BUILTIN
 	pinMode(LED_BUILTIN, OUTPUT);
@@ -229,9 +216,12 @@ void MeshNet::loop(uint16_t wait_ms)
         if (len >= 1)
         {
             RHRouter::RoutingTableEntry *route = manager->getRouteTo(from);
-            sprintf(buffer, "Rx:%d RSSI:%d SNR:%d Hop:%d Id:%d len:%d\n", from, rf95.lastRssi(), rf95.lastSNR(), route->next_hop, id, len);
+            // sprintf(buffer, "Rx:%d RSSI:%d SNR:%d Hop:%d Id:%d len:%d\n", from, rf95.lastRssi(), rf95.lastSNR(), route->next_hop, id, len);
+            sprintf(buffer, "%x: RSSI:%d SNR:%d %d(%d) Id:%d\n", _tmpMessage.header.msgType, rf95.lastRssi(), rf95.lastSNR(), from, route->next_hop, id);
+
+
             // Serial.print(buffer);
-            printMsg(buffer, true);
+            printMsg(buffer);
 
             switch(p->msgType)
             {
@@ -247,8 +237,8 @@ void MeshNet::loop(uint16_t wait_ms)
                     MeshNetPingReq *a;
                     
                     a = (MeshNetPingReq *)p;
-                    sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n", a->power, rf95.lastRssi(), rf95.lastSNR());
-                    printMsg(buffer);
+                    // sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n", a->power, rf95.lastRssi(), rf95.lastSNR());
+                    // printMsg(buffer);
 
                     sendPingRsp(from);
                     break;
