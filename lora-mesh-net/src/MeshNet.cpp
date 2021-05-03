@@ -127,7 +127,7 @@ void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t
 
     disp.begin(&Adafruit128x64, SD1306_Address);
     disp.setFont(System5x7);
-    disp.set1X();
+    disp.set2X();
     disp.setScrollMode(SCROLL_MODE_AUTO);
 #endif
 
@@ -218,9 +218,6 @@ void MeshNet::loop(uint16_t wait_ms)
             RHRouter::RoutingTableEntry *route = manager->getRouteTo(from);
             // sprintf(buffer, "Rx:%d RSSI:%d SNR:%d Hop:%d Id:%d len:%d\n", from, rf95.lastRssi(), rf95.lastSNR(), route->next_hop, id, len);
             sprintf(buffer, "%x: RSSI:%d SNR:%d %d(%d) Id:%d\n", _tmpMessage.header.msgType, rf95.lastRssi(), rf95.lastSNR(), from, route->next_hop, id);
-
-
-            // Serial.print(buffer);
             printMsg(buffer);
 
             switch(p->msgType)
@@ -228,7 +225,7 @@ void MeshNet::loop(uint16_t wait_ms)
                 case MESH_NET_MESSAGE_TYPE_PING_RESPONSE:
                 {
                     MeshNetPingRsp *a = (MeshNetPingRsp *)p;
-                    sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n",a->power, a->rssi - 50, a->snr);
+                    sprintf(buffer, "%x: %d dBm RSSI:%d SNR:%d\n", _tmpMessage.header.msgType, a->power, a->rssi - 50, a->snr);
                     printMsg(buffer);
                     break;
                 }
@@ -237,9 +234,6 @@ void MeshNet::loop(uint16_t wait_ms)
                     MeshNetPingReq *a;
                     
                     a = (MeshNetPingReq *)p;
-                    // sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n", a->power, rf95.lastRssi(), rf95.lastSNR());
-                    // printMsg(buffer);
-
                     sendPingRsp(from);
                     break;
                 }
@@ -287,7 +281,7 @@ void MeshNet::loop(uint16_t wait_ms)
                         date = ntohl(a->date);
                         time = ntohl(a->time);
 
-                        sprintf(buffer, "Date: %lu, Time: %lu, LAT: %ld, LON: %ld\n", date, time, lat, lon);                        
+                        sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld\n", date, time, lat, lon);                        
                         printMsg(buffer);
                     }
                     break;
@@ -373,7 +367,7 @@ void MeshNet::sendFixRsp(uint8_t address)
     // gpsModule.getFixStr(buffer);
     // Serial.print(buffer);
 
-    sprintf(buffer, "Date: %lu, Time: %lu, LAT: %ld, LON: %ld\n", date, time, lat, lon);                        
+    sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld\n", date, time, lat, lon);                        
     Serial.print(buffer);
 
     sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), address, flags);
@@ -392,11 +386,6 @@ void MeshNet::sendModReq(uint8_t address, uint8_t mode, uint8_t power, uint8_t f
     a->mode = mode;
     a->power = power;
 	sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetModReq), address, flags);
-
-    // if (flags & modreq_mode)
-    // {
-    //     setModemConfig(mode);
-    // }
 }
 
 void MeshNet::sendModRsp(uint8_t address, uint8_t flags)
@@ -439,7 +428,6 @@ uint8_t MeshNet::sendtoWaitStats(MeshNetApplicationMessage &msg, uint8_t len, ui
         case RH_ROUTER_ERROR_NONE:
         {
             RHRouter::RoutingTableEntry *route = manager->getRouteTo(address);
-            // sprintf(buffer, "TxAck:%d RSSI:%d\nSNR:%d Hop:%d\n", address, rf95.lastRssi(), rf95.lastSNR(), route->next_hop);
             sprintf(buffer, "%x: RSSI:%d SNR:%d %d(%d)\n", msg.header.msgType, rf95.lastRssi(), rf95.lastSNR(), address, route->next_hop);
             printMsg(buffer);
         }
