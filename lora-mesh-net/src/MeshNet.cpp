@@ -37,12 +37,39 @@ int freeMem()
 void printMsg(const char * msg, bool clear=false)
 {
     // disp.setCursor(0, row);
+// #ifdef UseSD1306
+//     if(clear)
+//         disp.clear();
+//     disp.print(msg);
+// #endif
+    Serial.print(msg);
+}
+
+void printMsg1(const char * msg, bool clear=false)
+{
+    // disp.setCursor(0, row);
 #ifdef UseSD1306
     if(clear)
+    {
         disp.clear();
+    }
     disp.print(msg);
 #endif
     Serial.print(msg);
+}
+
+void displayStats(int16_t rssi, int8_t snr)
+{
+#ifdef UseSD1306
+    // disp.set1X();
+    // disp.setCursor(0,0);
+    disp.print(F("RSSI "));
+    disp.print(rssi);
+
+    // disp.setCursor(0,2);
+    disp.print(F(" SNR  "));
+    disp.println(snr);
+#endif
 }
 
 #ifdef FOTA_CLIENT
@@ -107,13 +134,14 @@ void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t
 #endif
 
 #ifdef UseSD1306
-    // Wire.begin();
-    // Wire.beginTransmission(SD1306_Address);
-    // Wire.endTransmission();
+    Wire.begin();
+    Wire.beginTransmission(SD1306_Address);
+    Wire.endTransmission();
 
     disp.begin(&Adafruit128x64, SD1306_Address);
-    disp.setFont(Adafruit5x7);
+    disp.setFont(Callibri11_bold);
     disp.set1X();
+    disp.setScrollMode(SCROLL_MODE_AUTO);
 #endif
 
 	if (!manager->init())
@@ -122,8 +150,8 @@ void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t
         return;
 	}
 
-    sprintf(buffer, "RF95 ready(mem = %d)\n",freeMem());
-    printMsg(buffer, true);
+    sprintf(buffer, "Ready\n(mem = %d)\n",freeMem());
+    printMsg1(buffer, true);
 
 #ifdef LED_BUILTIN
 	pinMode(LED_BUILTIN, OUTPUT);
@@ -185,17 +213,23 @@ void MeshNet::loop(uint16_t wait_ms)
     uint8_t id;
     uint8_t flags;
 
+
 	if (manager->recvfromAck((uint8_t *)&_tmpMessage, &len, &from, &dest, &id, &flags))
 	// if (manager->recvfromAckTimeout((uint8_t *)&_tmpMessage, &len, wait_ms, &from, &dest, &id, &flags))
 	{
+        uint8_t snr = rf95.lastSNR();
+        int16_t rssi = rf95.lastRssi();
+
 		blinkLed();
+        displayStats(rssi, snr);
 
         MeshMessageHeader *p = (MeshMessageHeader *)&_tmpMessage;
+
 
         if (len >= 1)
         {
             RHRouter::RoutingTableEntry *route = manager->getRouteTo(from);
-            sprintf(buffer, "Rx:%d RSSI:%d\nSNR:%d Hop:%d Id:%d len:%d\n", from, rf95.lastRssi(), rf95.lastSNR(), route->next_hop, id, len);
+            sprintf(buffer, "Rx:%d RSSI:%d SNR:%d Hop:%d Id:%d len:%d\n", from, rf95.lastRssi(), rf95.lastSNR(), route->next_hop, id, len);
             // Serial.print(buffer);
             printMsg(buffer, true);
 
@@ -204,7 +238,7 @@ void MeshNet::loop(uint16_t wait_ms)
                 case MESH_NET_MESSAGE_TYPE_PING_RESPONSE:
                 {
                     MeshNetPingRsp *a = (MeshNetPingRsp *)p;
-                    sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n",a->power, a->rssi, a->snr);
+                    sprintf(buffer, "%d dBm RSSI:%d\nSNR:%d\n",a->power, a->rssi - 50, a->snr);
                     printMsg(buffer);
                     break;
                 }
@@ -302,7 +336,7 @@ void MeshNet::sendPingRsp(uint8_t address)
     r = (MeshNetPingRsp *)&_tmpMessage;
     r->header.msgType = MESH_NET_MESSAGE_TYPE_PING_RESPONSE;
     r->power = power;
-    r->rssi = rf95.lastRssi();
+    r->rssi = rf95.lastRssi() + 50;
     r->snr = rf95.lastSNR();
 
     int ferror = rf95.frequencyError();
