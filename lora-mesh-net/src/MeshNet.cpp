@@ -38,26 +38,24 @@ void printMsg(const char * msg)
 {
     // disp.setCursor(0, row);
 #ifdef UseSD1306
-    // if(clear)
-    //     disp.clear();
     disp.print(msg);
 #endif
     Serial.print(msg);
 }
 
-void displayStats(int16_t rssi, int8_t snr)
-{
-#ifdef UseSD1306
-    // disp.set1X();
-    // disp.setCursor(0,0);
-    disp.print(F("RSSI "));
-    disp.print(rssi);
+// void displayStats(int16_t rssi, int8_t snr)
+// {
+// #ifdef UseSD1306
+//     // disp.set1X();
+//     // disp.setCursor(0,0);
+//     disp.print(F("RSSI "));
+//     disp.print(rssi);
 
-    // disp.setCursor(0,2);
-    disp.print(F(" SNR  "));
-    disp.println(snr);
-#endif
-}
+//     // disp.setCursor(0,2);
+//     disp.print(F(" SNR  "));
+//     disp.println(snr);
+// #endif
+// }
 
 #ifdef FOTA_CLIENT
 void hexConv (const uint8_t * (& pStr), byte & b)
@@ -127,7 +125,7 @@ void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t
 
     disp.begin(&Adafruit128x64, SD1306_Address);
     disp.setFont(System5x7);
-    disp.set2X();
+    disp.set1X();
     disp.setScrollMode(SCROLL_MODE_AUTO);
 #endif
 
@@ -217,7 +215,7 @@ void MeshNet::loop(uint16_t wait_ms)
         {
             RHRouter::RoutingTableEntry *route = manager->getRouteTo(from);
             // sprintf(buffer, "Rx:%d RSSI:%d SNR:%d Hop:%d Id:%d len:%d\n", from, rf95.lastRssi(), rf95.lastSNR(), route->next_hop, id, len);
-            sprintf(buffer, "%x: RSSI:%d SNR:%d %d(%d) Id:%d\n", _tmpMessage.header.msgType, rf95.lastRssi(), rf95.lastSNR(), from, route->next_hop, id);
+            sprintf(buffer, "%x: %d %d %d %d\n", _tmpMessage.header.msgType, rf95.lastRssi(), rf95.lastSNR(), route->next_hop, id);
             printMsg(buffer);
 
             switch(p->msgType)
@@ -225,7 +223,7 @@ void MeshNet::loop(uint16_t wait_ms)
                 case MESH_NET_MESSAGE_TYPE_PING_RESPONSE:
                 {
                     MeshNetPingRsp *a = (MeshNetPingRsp *)p;
-                    sprintf(buffer, "%x: %d dBm RSSI:%d SNR:%d\n", _tmpMessage.header.msgType, a->power, a->rssi - 50, a->snr);
+                    sprintf(buffer, "%x: %d dBm RSSI:%d SNR:%d ppm:%d\n", _tmpMessage.header.msgType, a->power, a->rssi - 50, a->snr, a->ppm);
                     printMsg(buffer);
                     break;
                 }
@@ -428,7 +426,7 @@ uint8_t MeshNet::sendtoWaitStats(MeshNetApplicationMessage &msg, uint8_t len, ui
         case RH_ROUTER_ERROR_NONE:
         {
             RHRouter::RoutingTableEntry *route = manager->getRouteTo(address);
-            sprintf(buffer, "%x: RSSI:%d SNR:%d %d(%d)\n", msg.header.msgType, rf95.lastRssi(), rf95.lastSNR(), address, route->next_hop);
+            sprintf(buffer, "%x: %d %d %d\n", msg.header.msgType, rf95.lastRssi(), rf95.lastSNR(), route->next_hop);
             printMsg(buffer);
         }
         break;
