@@ -183,6 +183,16 @@ void handleData() {
             mesh.sendModReq(nodeId, 0, power, MeshNet::modreq_power);
             break;
         }
+
+        case 'F':
+        {
+            // F <node>
+            s = strtok(NULL, " ");
+            uint8_t nodeId = atoi(s);
+            Serial.println(nodeId, DEC);
+            mesh.sendFixReq(nodeId);
+            break;
+        }
     }
   }
 }

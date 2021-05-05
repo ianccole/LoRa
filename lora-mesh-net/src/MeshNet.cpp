@@ -202,8 +202,8 @@ void MeshNet::loop(uint16_t wait_ms)
 	if (manager->recvfromAck((uint8_t *)&_tmpMessage, &len, &from, &dest, &id, &flags))
 	// if (manager->recvfromAckTimeout((uint8_t *)&_tmpMessage, &len, wait_ms, &from, &dest, &id, &flags))
 	{
-        uint8_t snr = rf95.lastSNR();
-        int16_t rssi = rf95.lastRssi();
+        // uint8_t snr = rf95.lastSNR();
+        // int16_t rssi = rf95.lastRssi();
 
 		blinkLed();
         // displayStats(rssi, snr);
@@ -229,9 +229,6 @@ void MeshNet::loop(uint16_t wait_ms)
                 }
                 case MESH_NET_MESSAGE_TYPE_PING_REQUEST:
                 {
-                    MeshNetPingReq *a;
-                    
-                    a = (MeshNetPingReq *)p;
                     sendPingRsp(from);
                     break;
                 }
@@ -263,6 +260,10 @@ void MeshNet::loop(uint16_t wait_ms)
                     sendPingRsp(from);
                     break;
                 }
+
+                case MESH_NET_MESSAGE_TYPE_FIX_REQUEST:
+                    sendFixRsp(from);
+                    break;
 
                 case MESH_NET_MESSAGE_TYPE_FIX_RESPONSE:
                 {
@@ -323,7 +324,7 @@ void MeshNet::sendPingRsp(uint8_t address)
 
     int ferror = rf95.frequencyError();
     r->ppm = (ferror / _freqMHz);
-    Serial.println(r->ppm);
+    // Serial.println(r->ppm);
 
     uint8_t flags = 0;
     sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), address, flags);
@@ -339,8 +340,7 @@ void MeshNet::sendFixReq(uint8_t address,uint8_t flags)
 #if defined(NODE_HAVE_GPS)
 void MeshNet::sendFixRsp(uint8_t address)
 {
-    MeshNetFixRsp *r;
-    r = (MeshNetFixRsp *)_tmpMessage;
+    MeshNetFixRsp *r = (MeshNetFixRsp *)&_tmpMessage;
     r->header.msgType = MESH_NET_MESSAGE_TYPE_FIX_RESPONSE;
 
     uint8_t flags = gpsModule.gpsFix ? 1 : 0;
