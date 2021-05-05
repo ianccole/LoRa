@@ -78,14 +78,13 @@ public:
     typedef struct
     {
         MeshMessageHeader   header;  ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
-        int                 ferror;
-        int8_t              gpsFix;
         unsigned long       date;
         unsigned long       time;
         long                lat;
         long                lon;
         unsigned long       fix_age;
         unsigned long       time_age;
+        int8_t              gpsFix;
     } MeshNetFixRsp;
 
     /*-----------------------------
