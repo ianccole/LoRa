@@ -369,7 +369,7 @@ void MeshNet::sendFixRsp(uint8_t address)
     sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld\n", date, time, lat, lon);                        
     Serial.print(buffer);
 
-    sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), address, flags);
+    sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetFixRsp), address, flags);
 }
 #endif
 
