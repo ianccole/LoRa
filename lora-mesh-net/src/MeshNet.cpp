@@ -21,6 +21,9 @@ SSD1306AsciiWire disp;
 SPIFlash flash(SS_FLASHMEM);
 #endif
 
+#define ntohl
+#define htonl
+
 // RH_RF95 MeshNet::rf95;
 
 MeshNet::MeshNetApplicationMessage MeshNet::_tmpMessage;
