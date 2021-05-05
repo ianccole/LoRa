@@ -261,10 +261,11 @@ void MeshNet::loop(uint16_t wait_ms)
                     break;
                 }
 
+#if defined(NODE_HAVE_GPS)
                 case MESH_NET_MESSAGE_TYPE_FIX_REQUEST:
                     sendFixRsp(from);
                     break;
-
+#endif
                 case MESH_NET_MESSAGE_TYPE_FIX_RESPONSE:
                 {
                     MeshNetFixRsp *a = (MeshNetFixRsp *)p;
