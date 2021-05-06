@@ -115,12 +115,12 @@ public:
         return gps.altitude();
     }
 
-    float getLatitude()
+    int32_t getLatitude()
     {
         return gps.latitude();
     }
 
-    float getLongitude()
+    int32_t getLongitude()
     {
         return gps.longitude();
     }
