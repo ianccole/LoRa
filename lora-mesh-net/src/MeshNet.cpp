@@ -346,17 +346,17 @@ void MeshNet::sendFixRsp(uint8_t address)
     int32_t altitude = gpsModule.getAltitude();
 
     Payload pl(_tmpMessage.data, MESH_NET_MAX_MESSAGE_LEN);
-    pl.addValue32(1,1,4,latitude);
-    pl.addValue32(2,1,4,longitude);
-    pl.addValue32(3,1,4,altitude);
+    pl.addValue32(latitude);
+    pl.addValue32(longitude);
+    pl.addValue32(altitude);
 
     uint32_t date;
     uint32_t time; 
 
     gpsModule.getDateTime(&date, &time, 0);
 
-    pl.addValue32(4,1,4,date);
-    pl.addValue32(5,1,4,time);
+    pl.addValue32(date);
+    pl.addValue32(time);
 
     sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld ALT: %ld\n", date, time, latitude, longitude, altitude);                        
     Serial.print(buffer);
