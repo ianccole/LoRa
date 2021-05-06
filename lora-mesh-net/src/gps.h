@@ -125,12 +125,9 @@ public:
         return gps.longitude();
     }
 
-    void getDateTime(unsigned long *date, unsigned long *time, unsigned long *time_age)
+    void getDateTime(uint32_t *date, uint32_t *time, uint32_t *time_age)
     {
         gps.get_datetime(date, time, time_age);
-        // *date = 0x44;
-        // *time = 0x55;
-        // *time_age = 0x66;
     }
 
     void powerOn()

@@ -289,6 +289,8 @@ void MeshNet::loop(uint16_t wait_ms)
                         int32_t latitude = pl.getValue32(channel, type, size);
                         int32_t longitude = pl.getValue32(channel, type, size);
                         int32_t altitude = pl.getValue32(channel, type, size);
+                        uint32_t date = pl.getValue32(channel, type, size);
+                        uint32_t time = pl.getValue32(channel, type, size);
 
                         // float latitude = lpp.getValue(lpp.getBuffer(), 3, 10000, true);
                         // float longitude = lpp.getValue(lpp.getBuffer()+3, 3, 10000, true);
@@ -299,9 +301,9 @@ void MeshNet::loop(uint16_t wait_ms)
                         // String value3 = String(altitude);
 
 
-                        sprintf(buffer, "%ld %ld %ld\n", latitude, longitude, altitude);                        
+                        // sprintf(buffer, "%ld %ld %ld\n", latitude, longitude, altitude);                        
                         // sprintf(buffer, "%s %s %ld\n", value1.c_str(), value2.c_str(), altitude);                        
-                        // sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld\n", date, time, lat, lon);                        
+                        sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld ALT: %ld\n", date, time, latitude, longitude, altitude);                        
                         printMsg(buffer);
                     }
                     break;
@@ -386,13 +388,13 @@ void MeshNet::sendFixRsp(uint8_t address)
     // r->lon = htonl(lon);
     // r->fix_age = htonl(fix_age);
 
-    // unsigned long date;
-    // unsigned long time; 
-    // unsigned long time_age;
-    // gpsModule.getDateTime(&date, &time, &time_age);
-    // r->date = htonl(date);
-    // r->time = htonl(time);
-    // r->time_age = htonl(time_age);
+    uint32_t date;
+    uint32_t time; 
+
+    gpsModule.getDateTime(&date, &time, 0);
+
+    pl.addValue32(4,1,4,date);
+    pl.addValue32(5,1,4,time);
 
     // gpsModule.getFixStr(buffer);
     // Serial.print(buffer);
@@ -400,7 +402,8 @@ void MeshNet::sendFixRsp(uint8_t address)
     // sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld\n", date, time, lat, lon);                        
     // Serial.print(buffer);
 
-    sprintf(buffer, "%ld %ld %ld\n", latitude, longitude, altitude);                        
+    sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld ALT: %ld\n", date, time, latitude, longitude, altitude);                        
+    // sprintf(buffer, "%ld %ld %ld\n", latitude, longitude, altitude);                        
     Serial.print(buffer);
 
     sendtoWaitStats(_tmpMessage, MESH_NET_MESSAGE_HDR_LEN + pl.getSize(), address, flags);
