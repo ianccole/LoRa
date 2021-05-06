@@ -252,7 +252,7 @@ void MeshNet::loop(uint16_t wait_ms)
 #endif
                 case MESH_NET_MESSAGE_TYPE_APP_REQUEST:
                 {
-                    MeshNetApplicationMessage *a = (MeshNetApplicationMessage *)p;
+                    // MeshNetApplicationMessage *a = (MeshNetApplicationMessage *)p;
                     // a->data[len - sizeof(MeshMessageHeader)] = '\0';
                     // Serial.println(a->data);
 
@@ -291,7 +291,7 @@ void MeshNet::loop(uint16_t wait_ms)
                         String value2 = String(longitude);
                         String value3 = String(altitude);
 
-                        sprintf(buffer, "%s %s %d\n", value1.c_str(), value2.c_str(), altitude);                        
+                        sprintf(buffer, "%s %s %ld\n", value1.c_str(), value2.c_str(), altitude);                        
                         // sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld\n", date, time, lat, lon);                        
                         printMsg(buffer);
                     }
@@ -364,7 +364,7 @@ void MeshNet::sendFixRsp(uint8_t address)
     float longitude = gpsModule.getLongitude();
     float altitude = gpsModule.getAltitude();
 
-    CayenneLPP lpp(_tmpMessage.data, MESH_NET_MAX_MESSAGE_LEN);
+    CayenneLPP lpp(&_tmpMessage.data[0], MESH_NET_MAX_MESSAGE_LEN);
     lpp.addGPS(1, latitude, longitude, altitude);
 
     // gpsModule.getPosition(&lat, &lon, &fix_age);
