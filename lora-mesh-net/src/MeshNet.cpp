@@ -287,7 +287,11 @@ void MeshNet::loop(uint16_t wait_ms)
                         float longitude = lpp.getValue(lpp.getBuffer()+3, 3, 10000, true);
                         int32_t altitude = lpp.getValue(lpp.getBuffer()+3, 3, 100, true);
 
-                        sprintf(buffer, "%f Time: %f %d\n", latitude, longitude, altitude);                        
+                        String value1 = String(latitude);
+                        String value2 = String(longitude);
+                        String value3 = String(altitude);
+
+                        sprintf(buffer, "%s %s %d\n", value1.c_str(), value2.c_str(), altitude);                        
                         // sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld\n", date, time, lat, lon);                        
                         printMsg(buffer);
                     }
@@ -356,8 +360,12 @@ void MeshNet::sendFixRsp(uint8_t address)
     // int32_t lon; 
     // uint32_t fix_age;
 
+    float latitude = gpsModule.getLatitude();
+    float longitude = gpsModule.getLongitude();
+    float altitude = gpsModule.getAltitude();
+
     CayenneLPP lpp(_tmpMessage.data, MESH_NET_MAX_MESSAGE_LEN);
-    lpp.addGPS(1, gpsModule.getLatitude(), gpsModule.getLongitude(), gpsModule.getAltitude());
+    lpp.addGPS(1, latitude, longitude, altitude);
 
     // gpsModule.getPosition(&lat, &lon, &fix_age);
     // r->lat = htonl(lat);
@@ -377,6 +385,13 @@ void MeshNet::sendFixRsp(uint8_t address)
 
     // sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld\n", date, time, lat, lon);                        
     // Serial.print(buffer);
+
+    String value1 = String(latitude);
+    String value2 = String(longitude);
+    String value3 = String(altitude);
+
+    sprintf(buffer, "%s %s %s\n", value1.c_str(), value2.c_str(), value3.c_str());                        
+    Serial.print(buffer);
 
     sendtoWaitStats(_tmpMessage, MESH_NET_MESSAGE_HDR_LEN + lpp.getSize(), address, flags);
 }
