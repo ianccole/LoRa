@@ -252,10 +252,6 @@ void MeshNet::loop(uint16_t wait_ms)
 #endif
                 case MESH_NET_MESSAGE_TYPE_APP_REQUEST:
                 {
-                    // MeshNetApplicationMessage *a = (MeshNetApplicationMessage *)p;
-                    // a->data[len - sizeof(MeshMessageHeader)] = '\0';
-                    // Serial.println(a->data);
-
                     sendPingRsp(from);
                     break;
                 }
@@ -270,16 +266,16 @@ void MeshNet::loop(uint16_t wait_ms)
 
                     if ( flags & 0x01 )
                     {
-                        uint8_t channel;
-                        uint8_t type;
-                        uint8_t size;
+                        // uint8_t channel;
+                        // uint8_t type;
+                        // uint8_t size;
 
                         Payload pl(_tmpMessage.data, MESH_NET_MAX_MESSAGE_LEN);
-                        int32_t latitude = pl.getValue32(channel, type, size);
-                        int32_t longitude = pl.getValue32(channel, type, size);
-                        int32_t altitude = pl.getValue32(channel, type, size);
-                        uint32_t date = pl.getValue32(channel, type, size);
-                        uint32_t time = pl.getValue32(channel, type, size);
+                        int32_t latitude = pl.getValue32();
+                        int32_t longitude = pl.getValue32();
+                        int32_t altitude = pl.getValue32();
+                        uint32_t date = pl.getValue32();
+                        uint32_t time = pl.getValue32();
 
                         sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld ALT: %ld\n", date, time, latitude, longitude, altitude);                        
                         printMsg(buffer);
