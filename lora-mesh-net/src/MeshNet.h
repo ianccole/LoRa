@@ -20,7 +20,9 @@
 class MeshNet
 {
 public:
+    #define MESH_NET_MESSAGE_HDR_LEN sizeof(MeshNet::MeshMessageHeader)
     #define MESH_NET_MAX_MESSAGE_LEN (RH_MESH_MAX_MESSAGE_LEN - sizeof(MeshNet::MeshMessageHeader))
+    
 
     enum class meshNodeType
     {
@@ -41,7 +43,7 @@ public:
     typedef struct
     {
         MeshMessageHeader   header; ///< msgType = RH_MESH_MESSAGE_TYPE_APPLICATION 
-        char                data[MESH_NET_MAX_MESSAGE_LEN]; ///< Application layer payload data
+        uint8_t             data[MESH_NET_MAX_MESSAGE_LEN]; ///< Application layer payload data
     } MeshNetApplicationMessage;
 
     /*-----------------------------
@@ -70,22 +72,25 @@ public:
         int8_t              ppm;     ///< Fc ppm error
     } MeshNetPingRsp;
 
-    typedef struct
-    {
-        MeshMessageHeader   header;  ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
-    } MeshNetFixReq;
+    // typedef struct
+    // {
+    //     MeshMessageHeader   header;  ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
+    // } MeshNetFixReq;
 
-    typedef struct
-    {
-        MeshMessageHeader   header;  ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
-        uint32_t            date;
-        uint32_t            time;
-        int32_t             lat;
-        int32_t             lon;
-        uint32_t            fix_age;
-        uint32_t            time_age;
-        int8_t              gpsFix;
-    } MeshNetFixRsp;
+    // typedef struct
+    // {
+    //     MeshMessageHeader   header;  ///< msgType = RH_MESH_MESSAGE_TYPE_ROUTE_DISCOVERY_*
+    //     int8_t              pad1;
+    //     int8_t              pad2;
+    //     int8_t              pad3;
+    //     uint32_t            date;
+    //     uint32_t            time;
+    //     int32_t             lat;
+    //     int32_t             lon;
+    //     uint32_t            fix_age;
+    //     uint32_t            time_age;
+    //     int8_t              gpsFix;
+    // } MeshNetFixRsp;
 
     /*-----------------------------
     | flags:

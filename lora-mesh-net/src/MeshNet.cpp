@@ -5,6 +5,7 @@
 #include <MeshNet.h>
 #include <MemoryFree.h>
 #include <gps.h>
+#include <CayenneLPP.h>
 
 #define FLASHHDRLEN (10)
 
@@ -20,11 +21,6 @@ SSD1306AsciiWire disp;
 #include <SPIFlash.h>
 SPIFlash flash(SS_FLASHMEM);
 #endif
-
-#define ntohl
-#define htonl
-
-// RH_RF95 MeshNet::rf95;
 
 MeshNet::MeshNetApplicationMessage MeshNet::_tmpMessage;
 char MeshNet::buffer[50];
@@ -257,8 +253,8 @@ void MeshNet::loop(uint16_t wait_ms)
                 case MESH_NET_MESSAGE_TYPE_APP_REQUEST:
                 {
                     MeshNetApplicationMessage *a = (MeshNetApplicationMessage *)p;
-                    a->data[len - sizeof(MeshMessageHeader)] = '\0';
-                    Serial.println(a->data);
+                    // a->data[len - sizeof(MeshMessageHeader)] = '\0';
+                    // Serial.println(a->data);
 
                     sendPingRsp(from);
                     break;
@@ -271,20 +267,28 @@ void MeshNet::loop(uint16_t wait_ms)
 #endif
                 case MESH_NET_MESSAGE_TYPE_FIX_RESPONSE:
                 {
-                    MeshNetFixRsp *a = (MeshNetFixRsp *)p;
+                    CayenneLPP lpp(_tmpMessage.data, len);
+
+
+                    // MeshNetFixRsp *a = (MeshNetFixRsp *)p;
                     if ( flags & 0x01 )
                     {
-                        long lat; 
-                        long lon; 
-                        unsigned long date;
-                        unsigned long time; 
+                        // long lat; 
+                        // long lon; 
+                        // unsigned long date;
+                        // unsigned long time; 
 
-                        lat = ntohl(a->lat);
-                        lon = ntohl(a->lon);
-                        date = ntohl(a->date);
-                        time = ntohl(a->time);
+                        // lat = ntohl(a->lat);
+                        // lon = ntohl(a->lon);
+                        // date = ntohl(a->date);
+                        // time = ntohl(a->time);
 
-                        sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld\n", date, time, lat, lon);                        
+                        float latitude = lpp.getValue(lpp.getBuffer(), 3, 10000, true);
+                        float longitude = lpp.getValue(lpp.getBuffer()+3, 3, 10000, true);
+                        int32_t altitude = lpp.getValue(lpp.getBuffer()+3, 3, 100, true);
+
+                        sprintf(buffer, "%f Time: %f %d\n", latitude, longitude, altitude);                        
+                        // sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld\n", date, time, lat, lon);                        
                         printMsg(buffer);
                     }
                     break;
@@ -336,43 +340,45 @@ void MeshNet::sendPingRsp(uint8_t address)
 
 void MeshNet::sendFixReq(uint8_t address,uint8_t flags)
 {
-    MeshNetFixReq *a = (MeshNetFixReq *)&_tmpMessage;
-    a->header.msgType = MESH_NET_MESSAGE_TYPE_FIX_REQUEST;    
-	sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetFixReq), address, flags);
+    // MeshNetFixReq *a = (MeshNetFixReq *)&_tmpMessage;
+    _tmpMessage.header.msgType = MESH_NET_MESSAGE_TYPE_FIX_REQUEST;    
+	sendtoWaitStats(_tmpMessage, MESH_NET_MESSAGE_HDR_LEN, address, flags);
 }
 
 #if defined(NODE_HAVE_GPS)
 void MeshNet::sendFixRsp(uint8_t address)
 {
-    MeshNetFixRsp *r = (MeshNetFixRsp *)&_tmpMessage;
-    r->header.msgType = MESH_NET_MESSAGE_TYPE_FIX_RESPONSE;
+    _tmpMessage.header.msgType = MESH_NET_MESSAGE_TYPE_FIX_RESPONSE;
 
     uint8_t flags = gpsModule.gpsFix ? 1 : 0;
 
-    long lat; 
-    long lon; 
-    unsigned long fix_age;
+    // int32_t lat; 
+    // int32_t lon; 
+    // uint32_t fix_age;
 
-    gpsModule.getPosition(&lat, &lon, &fix_age);
-    r->lat = htonl(lat);
-    r->lon = htonl(lon);
-    r->fix_age = htonl(fix_age);
+    CayenneLPP lpp(_tmpMessage.data, MESH_NET_MAX_MESSAGE_LEN);
+    lpp.addGPS(1, gpsModule.getLatitude(), gpsModule.getLongitude(), gpsModule.getAltitude());
 
-    unsigned long date;
-    unsigned long time; 
-    unsigned long time_age;
-    gpsModule.getDateTime(&date, &time, &time_age);
-    r->date = htonl(date);
-    r->time = htonl(time);
-    r->time_age = htonl(time_age);
+    // gpsModule.getPosition(&lat, &lon, &fix_age);
+    // r->lat = htonl(lat);
+    // r->lon = htonl(lon);
+    // r->fix_age = htonl(fix_age);
+
+    // unsigned long date;
+    // unsigned long time; 
+    // unsigned long time_age;
+    // gpsModule.getDateTime(&date, &time, &time_age);
+    // r->date = htonl(date);
+    // r->time = htonl(time);
+    // r->time_age = htonl(time_age);
 
     // gpsModule.getFixStr(buffer);
     // Serial.print(buffer);
 
-    sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld\n", date, time, lat, lon);                        
-    Serial.print(buffer);
+    // sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld\n", date, time, lat, lon);                        
+    // Serial.print(buffer);
 
-    sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetFixRsp), address, flags);
+    sendtoWaitStats(_tmpMessage, MESH_NET_MESSAGE_HDR_LEN + lpp.getSize(), address, flags);
 }
 #endif
 

@@ -57,7 +57,7 @@ public:
                         _state = gps_state::gps_on_first_fix;
                         ttff = millis() - _start;
                         SerialUSB.print(ttff);
-                        SerialUSB.println(" TTFF");
+                        SerialUSB.println(F(" TTFF"));
                         break;
 
                     case GPSModule::gps_state::gps_on_first_fix:
@@ -83,11 +83,11 @@ public:
 
             if (fix_age == TinyGPS::GPS_INVALID_AGE)
             {
-                SerialUSB.println("No fix detected");
+                SerialUSB.println(F("No fix detected"));
             }
             else if (fix_age > 5000)
             {
-                SerialUSB.println("Warning: possible stale data!");
+                SerialUSB.println(F("Warning: possible stale data!"));
             }
             else
             {
@@ -103,6 +103,26 @@ public:
         // *latitude = 0x11;
         // *longitude = 0x22;
         // *fix_age = 0x33;
+    }
+
+    void getPosition(float *latitude, float *longitude, unsigned long *fix_age)
+    {
+        gps.f_get_position(latitude, longitude, fix_age);
+    }
+
+    int32_t getAltitude()
+    {
+        return gps.altitude();
+    }
+
+    float getLatitude()
+    {
+        return gps.latitude();
+    }
+
+    float getLongitude()
+    {
+        return gps.longitude();
     }
 
     void getDateTime(unsigned long *date, unsigned long *time, unsigned long *time_age)
