@@ -268,19 +268,8 @@ void MeshNet::loop(uint16_t wait_ms)
                 case MESH_NET_MESSAGE_TYPE_FIX_RESPONSE:
                 {
 
-                    // MeshNetFixRsp *a = (MeshNetFixRsp *)p;
                     if ( flags & 0x01 )
                     {
-                        // long lat; 
-                        // long lon; 
-                        // unsigned long date;
-                        // unsigned long time; 
-
-                        // lat = ntohl(a->lat);
-                        // lon = ntohl(a->lon);
-                        // date = ntohl(a->date);
-                        // time = ntohl(a->time);
-
                         uint8_t channel;
                         uint8_t type;
                         uint8_t size;
@@ -292,17 +281,6 @@ void MeshNet::loop(uint16_t wait_ms)
                         uint32_t date = pl.getValue32(channel, type, size);
                         uint32_t time = pl.getValue32(channel, type, size);
 
-                        // float latitude = lpp.getValue(lpp.getBuffer(), 3, 10000, true);
-                        // float longitude = lpp.getValue(lpp.getBuffer()+3, 3, 10000, true);
-                        // int32_t altitude = lpp.getValue(lpp.getBuffer()+3, 3, 100, true);
-
-                        // String value1 = String(latitude);
-                        // String value2 = String(longitude);
-                        // String value3 = String(altitude);
-
-
-                        // sprintf(buffer, "%ld %ld %ld\n", latitude, longitude, altitude);                        
-                        // sprintf(buffer, "%s %s %ld\n", value1.c_str(), value2.c_str(), altitude);                        
                         sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld ALT: %ld\n", date, time, latitude, longitude, altitude);                        
                         printMsg(buffer);
                     }
@@ -367,26 +345,14 @@ void MeshNet::sendFixRsp(uint8_t address)
 
     uint8_t flags = gpsModule.gpsFix ? 1 : 0;
 
-    // int32_t lat; 
-    // int32_t lon; 
-    // uint32_t fix_age;
-
     int32_t latitude = gpsModule.getLatitude();
     int32_t longitude = gpsModule.getLongitude();
     int32_t altitude = gpsModule.getAltitude();
 
-    // CayenneLPP lpp(&_tmpMessage.data[0], MESH_NET_MAX_MESSAGE_LEN);
-    // lpp.addGPS(1, latitude, longitude, altitude);
-
-    Payload pl(&_tmpMessage.data[0], MESH_NET_MAX_MESSAGE_LEN);
+    Payload pl(_tmpMessage.data, MESH_NET_MAX_MESSAGE_LEN);
     pl.addValue32(1,1,4,latitude);
     pl.addValue32(2,1,4,longitude);
     pl.addValue32(3,1,4,altitude);
-
-    // gpsModule.getPosition(&lat, &lon, &fix_age);
-    // r->lat = htonl(lat);
-    // r->lon = htonl(lon);
-    // r->fix_age = htonl(fix_age);
 
     uint32_t date;
     uint32_t time; 
@@ -396,14 +362,7 @@ void MeshNet::sendFixRsp(uint8_t address)
     pl.addValue32(4,1,4,date);
     pl.addValue32(5,1,4,time);
 
-    // gpsModule.getFixStr(buffer);
-    // Serial.print(buffer);
-
-    // sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld\n", date, time, lat, lon);                        
-    // Serial.print(buffer);
-
     sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld ALT: %ld\n", date, time, latitude, longitude, altitude);                        
-    // sprintf(buffer, "%ld %ld %ld\n", latitude, longitude, altitude);                        
     Serial.print(buffer);
 
     sendtoWaitStats(_tmpMessage, MESH_NET_MESSAGE_HDR_LEN + pl.getSize(), address, flags);
