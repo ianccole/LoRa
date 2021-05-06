@@ -92,6 +92,7 @@ void handleData() {
 
 #if defined(_SAMD21_)
             EEPROM.commit();
+            // NVIC_SystemReset();             
 #endif
             break;
 
