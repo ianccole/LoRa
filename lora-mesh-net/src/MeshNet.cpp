@@ -5,7 +5,7 @@
 #include <MeshNet.h>
 #include <MemoryFree.h>
 #include <gps.h>
-#include <CayenneLPP.h>
+#include <payload.h>
 
 #define FLASHHDRLEN (10)
 
@@ -267,8 +267,6 @@ void MeshNet::loop(uint16_t wait_ms)
 #endif
                 case MESH_NET_MESSAGE_TYPE_FIX_RESPONSE:
                 {
-                    CayenneLPP lpp(_tmpMessage.data, len);
-
 
                     // MeshNetFixRsp *a = (MeshNetFixRsp *)p;
                     if ( flags & 0x01 )
@@ -283,15 +281,26 @@ void MeshNet::loop(uint16_t wait_ms)
                         // date = ntohl(a->date);
                         // time = ntohl(a->time);
 
-                        float latitude = lpp.getValue(lpp.getBuffer(), 3, 10000, true);
-                        float longitude = lpp.getValue(lpp.getBuffer()+3, 3, 10000, true);
-                        int32_t altitude = lpp.getValue(lpp.getBuffer()+3, 3, 100, true);
+                        uint8_t channel;
+                        uint8_t type;
+                        uint8_t size;
 
-                        String value1 = String(latitude);
-                        String value2 = String(longitude);
-                        String value3 = String(altitude);
+                        Payload pl(_tmpMessage.data, MESH_NET_MAX_MESSAGE_LEN);
+                        int32_t latitude = pl.getValue32(channel, type, size);
+                        int32_t longitude = pl.getValue32(channel, type, size);
+                        int32_t altitude = pl.getValue32(channel, type, size);
 
-                        sprintf(buffer, "%s %s %ld\n", value1.c_str(), value2.c_str(), altitude);                        
+                        // float latitude = lpp.getValue(lpp.getBuffer(), 3, 10000, true);
+                        // float longitude = lpp.getValue(lpp.getBuffer()+3, 3, 10000, true);
+                        // int32_t altitude = lpp.getValue(lpp.getBuffer()+3, 3, 100, true);
+
+                        // String value1 = String(latitude);
+                        // String value2 = String(longitude);
+                        // String value3 = String(altitude);
+
+
+                        sprintf(buffer, "%ld %ld %ld\n", latitude, longitude, altitude);                        
+                        // sprintf(buffer, "%s %s %ld\n", value1.c_str(), value2.c_str(), altitude);                        
                         // sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld\n", date, time, lat, lon);                        
                         printMsg(buffer);
                     }
@@ -360,12 +369,17 @@ void MeshNet::sendFixRsp(uint8_t address)
     // int32_t lon; 
     // uint32_t fix_age;
 
-    float latitude = gpsModule.getLatitude();
-    float longitude = gpsModule.getLongitude();
-    float altitude = gpsModule.getAltitude();
+    int32_t latitude = gpsModule.getLatitude();
+    int32_t longitude = gpsModule.getLongitude();
+    int32_t altitude = gpsModule.getAltitude();
 
-    CayenneLPP lpp(&_tmpMessage.data[0], MESH_NET_MAX_MESSAGE_LEN);
-    lpp.addGPS(1, latitude, longitude, altitude);
+    // CayenneLPP lpp(&_tmpMessage.data[0], MESH_NET_MAX_MESSAGE_LEN);
+    // lpp.addGPS(1, latitude, longitude, altitude);
+
+    Payload pl(&_tmpMessage.data[0], MESH_NET_MAX_MESSAGE_LEN);
+    pl.addValue32(1,1,4,latitude);
+    pl.addValue32(2,1,4,longitude);
+    pl.addValue32(3,1,4,altitude);
 
     // gpsModule.getPosition(&lat, &lon, &fix_age);
     // r->lat = htonl(lat);
@@ -386,14 +400,10 @@ void MeshNet::sendFixRsp(uint8_t address)
     // sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld\n", date, time, lat, lon);                        
     // Serial.print(buffer);
 
-    String value1 = String(latitude);
-    String value2 = String(longitude);
-    String value3 = String(altitude);
-
-    sprintf(buffer, "%s %s %s\n", value1.c_str(), value2.c_str(), value3.c_str());                        
+    sprintf(buffer, "%ld %ld %ld\n", latitude, longitude, altitude);                        
     Serial.print(buffer);
 
-    sendtoWaitStats(_tmpMessage, MESH_NET_MESSAGE_HDR_LEN + lpp.getSize(), address, flags);
+    sendtoWaitStats(_tmpMessage, MESH_NET_MESSAGE_HDR_LEN + pl.getSize(), address, flags);
 }
 #endif
 
