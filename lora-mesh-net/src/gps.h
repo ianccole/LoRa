@@ -132,10 +132,11 @@ public:
 
     void powerOn()
     {
+        ttff = 0;
+        gpsFix = false;
         digitalWrite(PIN_GPS_POWER, GPS_ON);    // GPS power ON
         _state = gps_state::gps_on;
         _start = millis();
-        ttff = 0;
     }
 
     void powerOff()
@@ -159,7 +160,6 @@ public:
 
 private:
     gps_state _state;
-    // bool _gpsFix;
     unsigned long _start;
 
 };
