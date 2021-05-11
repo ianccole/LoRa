@@ -6,7 +6,9 @@
 #include <MemoryFree.h>
 #include <gps.h>
 #include <payload.h>
+#if defined(LOW_POWER_NODE)
 #include <ArduinoLowPower.h>
+#endif
 
 #define FLASHHDRLEN (10)
 
