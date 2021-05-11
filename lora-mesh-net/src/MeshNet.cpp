@@ -6,6 +6,7 @@
 #include <MemoryFree.h>
 #include <gps.h>
 #include <payload.h>
+#include <ArduinoLowPower.h>
 
 #define FLASHHDRLEN (10)
 
@@ -274,10 +275,11 @@ void MeshNet::loop(uint16_t wait_ms)
                         int32_t latitude = pl.getValue32();
                         int32_t longitude = pl.getValue32();
                         int32_t altitude = pl.getValue32();
+                        int32_t ttff = pl.getValue32();
                         uint32_t date = pl.getValue32();
                         uint32_t time = pl.getValue32();
 
-                        sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld ALT: %ld\n", date, time, latitude, longitude, altitude);                        
+                        sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld ALT: %ld TTFF %ld\n", date, time, latitude, longitude, altitude, ttff);                        
                         printMsg(buffer);
                     }
                     break;
@@ -308,6 +310,33 @@ void MeshNet::loop(uint16_t wait_ms)
             }
         }
 	}
+
+#if defined(LOW_POWER_NODE)
+    if (nodeType == meshNodeType::node_track)
+    {
+        if (gpsModule.gpsFix)
+        {
+            Serial.println(F("Sending Fix"));
+            sendFixRsp(GATEWAY_NODE_ID);
+
+            // Serial.println(F("Sleeping"));
+            // gpsModule.powerOff();
+            // rf95.sleep(); // put radio into sleep mode
+            // LowPower.sleep(FIX_INTERVAL_MS);
+
+            Serial.println(F("Waking"));
+            // now awake. power up peripherals
+            gpsModule.powerOn();
+
+            rf95.setModeIdle(); // back to idle
+        }
+        else
+        {
+            Serial.println(F("No Fix"));
+        }
+    }
+
+#endif
 }
 
 void MeshNet::sendPingRsp(uint8_t address)
@@ -349,6 +378,7 @@ void MeshNet::sendFixRsp(uint8_t address)
     pl.addValue32(latitude);
     pl.addValue32(longitude);
     pl.addValue32(altitude);
+    pl.addValue32(gpsModule.ttff);
 
     uint32_t date;
     uint32_t time; 
@@ -358,7 +388,7 @@ void MeshNet::sendFixRsp(uint8_t address)
     pl.addValue32(date);
     pl.addValue32(time);
 
-    sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld ALT: %ld\n", date, time, latitude, longitude, altitude);                        
+    sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld ALT: %ld TTFF: %ld\n", date, time, latitude, longitude, altitude, gpsModule.ttff);                        
     Serial.print(buffer);
 
     sendtoWaitStats(_tmpMessage, MESH_NET_MESSAGE_HDR_LEN + pl.getSize(), address, flags);
