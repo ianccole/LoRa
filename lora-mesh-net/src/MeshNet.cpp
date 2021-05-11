@@ -276,12 +276,16 @@ void MeshNet::loop(uint16_t wait_ms)
                         Payload pl(_tmpMessage.data, MESH_NET_MAX_MESSAGE_LEN);
                         int32_t latitude = pl.getValue32();
                         int32_t longitude = pl.getValue32();
-                        int32_t altitude = pl.getValue32();
+                        int32_t fix_age = pl.getValue32();
                         int32_t ttff = pl.getValue32();
                         uint32_t date = pl.getValue32();
                         uint32_t time = pl.getValue32();
+                        uint32_t time_age = pl.getValue32();;
 
-                        sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld ALT: %ld TTFF %ld\n", date, time, latitude, longitude, altitude, ttff);                        
+                        sprintf(buffer, "Date: %lu Time: %lu timeage: %ld " , date, time, time_age);
+                        printMsg(buffer);
+
+                        sprintf(buffer, "LAT: %ld LON: %ld fixage: %ld TTFF %ld\n", latitude, longitude, fix_age, ttff);                        
                         printMsg(buffer);
                     }
                     break;
@@ -321,10 +325,10 @@ void MeshNet::loop(uint16_t wait_ms)
             Serial.println(F("Sending Fix"));
             sendFixRsp(GATEWAY_NODE_ID);
 
-            // Serial.println(F("Sleeping"));
-            // gpsModule.powerOff();
-            // rf95.sleep(); // put radio into sleep mode
-            // LowPower.sleep(FIX_INTERVAL_MS);
+            Serial.println(F("Sleeping"));
+            gpsModule.powerOff();
+            rf95.sleep(); // put radio into sleep mode
+            LowPower.sleep(FIX_INTERVAL_MS);
 
             Serial.println(F("Waking"));
             // now awake. power up peripherals
@@ -372,26 +376,33 @@ void MeshNet::sendFixRsp(uint8_t address)
 
     uint8_t flags = gpsModule.gpsFix ? 1 : 0;
 
-    int32_t latitude = gpsModule.getLatitude();
-    int32_t longitude = gpsModule.getLongitude();
-    int32_t altitude = gpsModule.getAltitude();
+
+    int32_t latitude; //= gpsModule.getLatitude();
+    int32_t longitude; //= gpsModule.getLongitude();
+    uint32_t fix_age;
+    uint32_t time_age;
+    uint32_t date;
+    uint32_t time; 
+
+    gpsModule.getPosition(&latitude, &longitude, &fix_age);
+    gpsModule.getDateTime(&date, &time, &time_age);
 
     Payload pl(_tmpMessage.data, MESH_NET_MAX_MESSAGE_LEN);
     pl.addValue32(latitude);
     pl.addValue32(longitude);
-    pl.addValue32(altitude);
+    pl.addValue32(fix_age);
     pl.addValue32(gpsModule.ttff);
-
-    uint32_t date;
-    uint32_t time; 
-
-    gpsModule.getDateTime(&date, &time, 0);
 
     pl.addValue32(date);
     pl.addValue32(time);
+    pl.addValue32(time_age);
 
-    sprintf(buffer, "Date: %lu Time: %lu LAT: %ld LON: %ld ALT: %ld TTFF: %ld\n", date, time, latitude, longitude, altitude, gpsModule.ttff);                        
-    Serial.print(buffer);
+    sprintf(buffer, "Date: %lu Time: %lu timeage: %ld " , date, time, time_age);
+    printMsg(buffer);
+
+    sprintf(buffer, "LAT: %ld LON: %ld fixage: %ld TTFF %ld\n", latitude, longitude, fix_age, gpsModule.ttff);                        
+    printMsg(buffer);
+
 
     sendtoWaitStats(_tmpMessage, MESH_NET_MESSAGE_HDR_LEN + pl.getSize(), address, flags);
 }

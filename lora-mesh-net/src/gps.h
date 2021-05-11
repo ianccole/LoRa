@@ -100,9 +100,6 @@ public:
     void getPosition(long *latitude, long *longitude, unsigned long *fix_age)
     {
         gps.get_position(latitude, longitude, fix_age);
-        // *latitude = 0x11;
-        // *longitude = 0x22;
-        // *fix_age = 0x33;
     }
 
     void getPosition(float *latitude, float *longitude, unsigned long *fix_age)
