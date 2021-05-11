@@ -15,6 +15,8 @@
 #define MESH_NET_MESSAGE_TYPE_MOD_REQUEST                    0x58
 #define MESH_NET_MESSAGE_TYPE_MOD_RESPONSE                   0x59
 
+#define GATEWAY_NODE_ID                                      100
+#define FIX_INTERVAL_MS                                      10000
 #define seconds() (millis()/1000)
 
 class MeshNet
@@ -26,10 +28,11 @@ public:
 
     enum class meshNodeType
     {
-        node_gateway    = 0,
+        node_track      = 0,
         node_relay      = 1,
-        node_track      = 2,
+        node_gateway    = 2,
         node_test       = 3,
+
         node_default    = 255
     };
 
