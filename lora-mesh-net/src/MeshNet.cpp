@@ -385,7 +385,7 @@ void MeshNet::sendFixRsp(uint8_t address)
     int32_t ttff;
     gpsModule.getPosition(&latitude, &longitude, &fix_age);
     gpsModule.getDateTime(&date, &time, &time_age);
-    ttff = gpsModule.ttff
+    ttff = gpsModule.ttff;
     Payload pl(_tmpMessage.data, MESH_NET_MAX_MESSAGE_LEN);
     pl.addValue32(latitude);
     pl.addValue32(longitude);
