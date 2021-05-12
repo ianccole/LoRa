@@ -282,7 +282,7 @@ void MeshNet::loop(uint16_t wait_ms)
                         uint32_t time = pl.getValue32();
                         uint32_t time_age = pl.getValue32();;
 
-                        sprintf(buffer, "Date: %lu Time: %lu timeage: %ld " , date, time, time_age);
+                        sprintf(buffer, "Date: %lu Time: %lu timeage: %ld\n" , date, time, time_age);
                         printMsg(buffer);
 
                         sprintf(buffer, "LAT: %ld LON: %ld fixage: %ld TTFF %ld\n", latitude, longitude, fix_age, ttff);                        
@@ -397,7 +397,7 @@ void MeshNet::sendFixRsp(uint8_t address)
     pl.addValue32(time);
     pl.addValue32(time_age);
 
-    sprintf(buffer, "Date: %lu Time: %lu timeage: %ld " , date, time, time_age);
+    sprintf(buffer, "Date: %lu Time: %lu timeage: %ld\n" , date, time, time_age);
     printMsg(buffer);
 
     sprintf(buffer, "LAT: %ld LON: %ld fixage: %ld TTFF %ld\n", latitude, longitude, fix_age, gpsModule.ttff);                        
