@@ -230,7 +230,7 @@ public:
 private:
     /// Temporary mesage buffer
     static MeshNetApplicationMessage _tmpMessage;
-    static char buffer[50];
+    static char buffer[80];
 
     const uint8_t pingInterval = 5;
     const uint8_t fotaInterval = 15;

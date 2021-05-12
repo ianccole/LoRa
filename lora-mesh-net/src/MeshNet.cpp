@@ -26,7 +26,7 @@ SPIFlash flash(SS_FLASHMEM);
 #endif
 
 MeshNet::MeshNetApplicationMessage MeshNet::_tmpMessage;
-char MeshNet::buffer[50];
+char MeshNet::buffer[80];
 
 int freeMem()
 {
@@ -282,10 +282,11 @@ void MeshNet::loop(uint16_t wait_ms)
                         uint32_t time = pl.getValue32();
                         uint32_t time_age = pl.getValue32();;
 
-                        sprintf(buffer, "Date: %lu Time: %lu timeage: %ld " , date, time, time_age);
+                        sprintf(buffer, "Date: %lu Time: %lu timeage: %ld\n" , date, time, time_age);
                         printMsg(buffer);
 
-                        sprintf(buffer, "LAT: %ld LON: %ld fixage: %ld TTFF %ld\n", latitude, longitude, fix_age, ttff);                        
+                        // sprintf(buffer, "LAT: %ld LON: %ld fixage: %ld TTFF %ld\n", latitude, longitude, fix_age, ttff);                        
+                        sprintf(buffer, "LAT: %ld LON: %ld TTFF %ld fixage: %ld\n", latitude, longitude, ttff, fix_age);                        
                         printMsg(buffer);
                     }
                     break;
