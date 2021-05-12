@@ -276,17 +276,19 @@ void MeshNet::loop(uint16_t wait_ms)
                         Payload pl(_tmpMessage.data, MESH_NET_MAX_MESSAGE_LEN);
                         int32_t latitude = pl.getValue32();
                         int32_t longitude = pl.getValue32();
-                        int32_t fix_age = pl.getValue32();
+                        // int32_t fix_age = pl.getValue32();
                         int32_t ttff = pl.getValue32();
-                        uint32_t date = pl.getValue32();
+                        // uint32_t date = pl.getValue32();
                         uint32_t time = pl.getValue32();
-                        uint32_t time_age = pl.getValue32();;
+                        // uint32_t time_age = pl.getValue32();;
 
-                        sprintf(buffer, "Date: %lu Time: %lu timeage: %ld\n" , date, time, time_age);
-                        printMsg(buffer);
+                        // sprintf(buffer, "Date: %lu Time: %lu timeage: %ld\n" , date, time, time_age);
+                        // sprintf(buffer, "Time: %lu\n" , time);
+                        // printMsg(buffer);
 
                         // sprintf(buffer, "LAT: %ld LON: %ld fixage: %ld TTFF %ld\n", latitude, longitude, fix_age, ttff);                        
-                        sprintf(buffer, "LAT: %ld LON: %ld fixage: %ld TTFF: %ld\n", latitude, longitude, fix_age, ttff);                        
+                        // sprintf(buffer, "LAT: %ld LON: %ld fixage: %ld TTFF: %ld\n", latitude, longitude, fix_age, ttff);                        
+                        sprintf(buffer, "Time: %lu LAT: %ld LON: %ld TTFF: %ld\n", time, latitude, longitude, ttff);                        
                         printMsg(buffer);
                     }
                     break;
@@ -337,10 +339,6 @@ void MeshNet::loop(uint16_t wait_ms)
 
             rf95.setModeIdle(); // back to idle
         }
-        else
-        {
-            Serial.println(F("No Fix"));
-        }
     }
 
 #endif
@@ -384,24 +382,26 @@ void MeshNet::sendFixRsp(uint8_t address)
     uint32_t time_age;
     uint32_t date;
     uint32_t time; 
-
+    int32_t ttff;
     gpsModule.getPosition(&latitude, &longitude, &fix_age);
     gpsModule.getDateTime(&date, &time, &time_age);
-
+    ttff = gpsModule.ttff
     Payload pl(_tmpMessage.data, MESH_NET_MAX_MESSAGE_LEN);
     pl.addValue32(latitude);
     pl.addValue32(longitude);
-    pl.addValue32(fix_age);
-    pl.addValue32(gpsModule.ttff);
+    // pl.addValue32(fix_age);
+    pl.addValue32(ttff);
 
-    pl.addValue32(date);
+    // pl.addValue32(date);
     pl.addValue32(time);
-    pl.addValue32(time_age);
+    // pl.addValue32(time_age);
 
-    sprintf(buffer, "Date: %lu Time: %lu timeage: %ld\n" , date, time, time_age);
-    printMsg(buffer);
+    // sprintf(buffer, "Date: %lu Time: %lu timeage: %ld\n" , date, time, time_age);
+    // printMsg(buffer);
 
-    sprintf(buffer, "LAT: %ld LON: %ld fixage: %ld TTFF %ld\n", latitude, longitude, fix_age, gpsModule.ttff);                        
+    
+    // sprintf(buffer, "LAT: %ld LON: %ld fixage: %ld TTFF %ld\n", latitude, longitude, fix_age, ttff);                        
+    sprintf(buffer, "Time: %lu LAT: %ld LON: %ld TTFF: %ld\n", time, latitude, longitude, ttff);                        
     printMsg(buffer);
 
 
