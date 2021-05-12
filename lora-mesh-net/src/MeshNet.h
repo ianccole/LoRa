@@ -16,7 +16,7 @@
 #define MESH_NET_MESSAGE_TYPE_MOD_RESPONSE                   0x59
 
 #define GATEWAY_NODE_ID                                      100
-#define FIX_INTERVAL_MS                                      10000
+#define FIX_INTERVAL_MS                                      30000
 #define seconds() (millis()/1000)
 
 class MeshNet

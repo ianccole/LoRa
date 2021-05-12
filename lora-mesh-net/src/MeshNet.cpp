@@ -286,7 +286,7 @@ void MeshNet::loop(uint16_t wait_ms)
                         printMsg(buffer);
 
                         // sprintf(buffer, "LAT: %ld LON: %ld fixage: %ld TTFF %ld\n", latitude, longitude, fix_age, ttff);                        
-                        sprintf(buffer, "LAT: %ld LON: %ld TTFF %ld fixage: %ld\n", latitude, longitude, ttff, fix_age);                        
+                        sprintf(buffer, "LAT: %ld LON: %ld fixage: %ld TTFF: %ld\n", latitude, longitude, fix_age, ttff);                        
                         printMsg(buffer);
                     }
                     break;
