@@ -11,7 +11,7 @@
 #include <RH_RF95.h>
 #define FREQMHZ 434.4
 #define POWER 20
-#define MODE 3
+#define MODE 0
 #define CAD_TIMEOUT 500
 
 #include <MeshNet.h>
