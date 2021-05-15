@@ -36,6 +36,15 @@ public:
         node_default    = 255
     };
 
+    enum class meshModeType
+    {
+        mode_inactive   = 0,
+        mode_ping       = 1,
+        mode_fix        = 2,
+
+        mode_default    = 255
+    };
+
     /// Structure of the basic MeshNet header.
     typedef struct
     {
@@ -168,7 +177,7 @@ public:
 
     void loop(uint16_t wait_ms);
 
-    void pingNode(uint8_t address, uint8_t flags = 0);
+    void sendPingReq(uint8_t address, uint8_t flags = 0);
 
     void appMessage(uint8_t address, char * buffer, uint8_t flags = 0);
 
@@ -207,8 +216,10 @@ public:
         rf95.setTxPower(power);
     };
 
-    void addNode(uint8_t node)
+    void addNode(uint8_t node, meshModeType mode)
     {
+        _modeType = (meshModeType)mode;
+
         if (node == 0)
         {
             memset(nodes, 0, sizeof(nodes));
@@ -225,8 +236,6 @@ public:
 
     void setModemConfig(uint8_t mode);
 
-    uint8_t pingNodeId;
-
 private:
     /// Temporary mesage buffer
     static MeshNetApplicationMessage _tmpMessage;
@@ -242,6 +251,7 @@ private:
     uint8_t _mode;
     uint8_t nodes[4];
     uint8_t nodeIdx;
+    meshModeType _modeType;
 
     // node type
     meshNodeType nodeType;

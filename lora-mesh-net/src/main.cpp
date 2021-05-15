@@ -102,7 +102,7 @@ void handleData() {
             uint8_t nodeId = atoi(s);
             sprintf(buffer, "Ping Node id: %d\n", nodeId);
             Serial.print(buffer);
-            mesh.addNode(nodeId);
+            mesh.addNode(nodeId, MeshNet::meshModeType::mode_ping);
             break;
         }
 
@@ -193,6 +193,18 @@ void handleData() {
             Serial.println(nodeId, DEC);
             mesh.sendFixReq(nodeId);
             break;
+        }
+
+        case 'H':
+        {
+            // H <node>
+            s = strtok(NULL, " ");
+            uint8_t nodeId = atoi(s);
+            sprintf(buffer, "FixReq Node id: %d\n", nodeId);
+            Serial.print(buffer);
+            mesh.addNode(nodeId, MeshNet::meshModeType::mode_fix);
+            break;
+
         }
     }
   }

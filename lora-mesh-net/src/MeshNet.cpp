@@ -101,7 +101,7 @@ void resetUsingWatchdog()
 ////////////////////////////////////////////////////////////////////
 // Constructors
 MeshNet::MeshNet(RH_RF95& rf95)
-    : pingNodeId(0), fotaTimeout(0), nodeIdx(0), fotaActive(false), rf95(rf95)
+    : fotaTimeout(0), nodeIdx(0), _modeType(meshModeType::mode_inactive), fotaActive(false), rf95(rf95)
 {
 }
 
@@ -177,7 +177,7 @@ void MeshNet::loop(uint16_t wait_ms)
     // if(pingNodeId && uint8_t(currentSeconds - pingTimeout) > pingInterval)
     // {
     //     pingTimeout = currentSeconds;
-    //     pingNode(pingNodeId);
+    //     sendPingReq(pingNodeId);
     // }
     if (nodeIdx && uint8_t(currentSeconds - pingTimeout) > pingInterval)
     {
@@ -186,7 +186,19 @@ void MeshNet::loop(uint16_t wait_ms)
         pingTimeout = currentSeconds;
         for(ii=0;ii<nodeIdx;ii++)
         {
-            pingNode(nodes[ii]);    
+            switch(_modeType)
+            {
+                case meshModeType::mode_fix:
+                    sendFixReq(nodes[ii]);
+                    break;
+
+                case meshModeType::mode_ping:
+                    sendPingReq(nodes[ii]);    
+                    break;
+
+                default:
+                    break;
+            }
         }
     }
 #ifdef FOTA_CLIENT
@@ -472,7 +484,7 @@ uint8_t MeshNet::sendtoWaitStats(MeshNetApplicationMessage &msg, uint8_t len, ui
     return error;
 }
 
-void MeshNet::pingNode(uint8_t address, uint8_t flags)
+void MeshNet::sendPingReq(uint8_t address, uint8_t flags)
 {
     MeshNetPingReq *a = (MeshNetPingReq *)&_tmpMessage;
     a->header.msgType = MESH_NET_MESSAGE_TYPE_PING_REQUEST;
