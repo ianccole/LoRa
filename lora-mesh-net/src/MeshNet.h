@@ -241,7 +241,7 @@ private:
     static MeshNetApplicationMessage _tmpMessage;
     static char buffer[80];
 
-    const uint8_t pingInterval = 5;
+    const uint8_t pingInterval = 10;
     const uint8_t fotaInterval = 15;
     uint8_t pingTimeout;
     uint8_t fotaTimeout;
