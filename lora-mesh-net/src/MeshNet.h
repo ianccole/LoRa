@@ -173,7 +173,7 @@ public:
     /// \param[in] thisAddress The address to assign to this node. Defaults to 0
     MeshNet(RH_RF95&);
 
-    void setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t power, uint16_t cad_timeout);
+    void setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t power, uint16_t cad_timeout, uint8_t mode);
 
     void loop(uint16_t wait_ms);
 

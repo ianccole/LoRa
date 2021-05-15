@@ -10,7 +10,8 @@
 #include <RHMesh.h>
 #include <RH_RF95.h>
 #define FREQMHZ 434.4
-#define POWER 5
+#define POWER 20
+#define MODE 3
 #define CAD_TIMEOUT 500
 
 #include <MeshNet.h>
@@ -220,7 +221,7 @@ void setup()
     sprintf(buffer, "Node id: 0x%x Node type: %d\n", nodeInfo.nodeId, nodeInfo.nodeType);
     Serial.print(buffer);
 
-    mesh.setup(nodeInfo.nodeId, nodeInfo.nodeType, FREQMHZ, POWER, CAD_TIMEOUT);
+    mesh.setup(nodeInfo.nodeId, nodeInfo.nodeType, FREQMHZ, POWER, CAD_TIMEOUT, MODE);
 }
 
 void loop()
