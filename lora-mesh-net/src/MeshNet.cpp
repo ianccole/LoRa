@@ -28,6 +28,17 @@ SPIFlash flash(SS_FLASHMEM);
 MeshNet::MeshNetApplicationMessage MeshNet::_tmpMessage;
 char MeshNet::buffer[80];
 
+// timeouts for payload of 20 for each mode
+PROGMEM static const uint16_t timeout_ms[] =
+{
+    200,    // Bw125Cr45Sf128
+    100,    // Bw500Cr45Sf128
+    1500,   // Bw31_25Cr48Sf512
+    1800,   // Bw125Cr48Sf4096
+
+    9999
+};
+
 int freeMem()
 {
 //   extern int __heap_start, *__brkval;
@@ -107,6 +118,7 @@ MeshNet::MeshNet(RH_RF95& rf95)
 
 void MeshNet::setModemConfig(uint8_t mode)
 {
+    manager->setTimeout(timeout_ms[mode]);
     rf95.setModemConfig((RH_RF95::ModemConfigChoice) mode);
 }
 
@@ -147,8 +159,7 @@ void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t
 	rf95.setTxPower(power);
 	rf95.setFrequency(_freqMHz);
 	rf95.setCADTimeout(cad_timeout);
-    manager->setTimeout(1500);
-    rf95.setModemConfig((RH_RF95::ModemConfigChoice) mode);
+    setModemConfig(mode);
 
 //   // long range configuration requires for on-air time
 //   boolean longRange = false;
