@@ -33,8 +33,8 @@ PROGMEM static const uint16_t timeout_ms[] =
 {
     200,    // Bw125Cr45Sf128
     100,    // Bw500Cr45Sf128
-    1500,   // Bw31_25Cr48Sf512
-    1800,   // Bw125Cr48Sf4096
+    1800,   // Bw31_25Cr48Sf512
+    2000,   // Bw125Cr48Sf4096
 
     9999
 };
