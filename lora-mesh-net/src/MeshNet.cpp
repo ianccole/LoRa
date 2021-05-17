@@ -446,7 +446,9 @@ void MeshNet::sendModReq(uint8_t address, uint8_t mode, uint8_t power, uint8_t f
     a->mode = mode;
     a->power = power;
 	sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetModReq), address, flags);
-    setModemConfig(mode);
+    sprintf(buffer, "Set Mode: %d\n", a->mode);                        
+    Serial.print(buffer);
+   setModemConfig(mode);
 }
 
 void MeshNet::sendModRsp(uint8_t address, uint8_t flags)
