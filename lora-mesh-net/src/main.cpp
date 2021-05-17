@@ -158,16 +158,17 @@ void handleData() {
 
         case 'M':
         {
-            // M <node> <mode>            
-            s = strtok(NULL, " ");
-            uint8_t nodeId = atoi(s);
-            Serial.println(nodeId, DEC);
+            // broadcast mode change
+            // M <mode>            
+            // s = strtok(NULL, " ");
+            // uint8_t nodeId = atoi(s);
+            // Serial.println(nodeId, DEC);
             
             s = strtok(NULL, " ");
             uint8_t mode = atoi(s);
             Serial.println(mode, DEC);
             
-            mesh.sendModReq(nodeId, mode, 0, MeshNet::modreq_mode);
+            mesh.sendModReq(0xff, mode, 0, MeshNet::modreq_mode);
             break;
         }
 
