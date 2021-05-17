@@ -326,17 +326,17 @@ void MeshNet::loop(uint16_t wait_ms)
                     break;
                 }
 
-                case MESH_NET_MESSAGE_TYPE_MOD_RESPONSE:
-                {
-                    Serial.println(F("Mod response"));
-                    if (flags & modreq_mode)
-                    {
-                        sprintf(buffer, "Set Mode: %d\n", _mode);                        
-                        printMsg(buffer);
-                        setModemConfig(_mode);
-                    }
-                    break;
-                }
+                // case MESH_NET_MESSAGE_TYPE_MOD_RESPONSE:
+                // {
+                //     Serial.println(F("Mod response"));
+                //     if (flags & modreq_mode)
+                //     {
+                //         sprintf(buffer, "Set Mode: %d\n", _mode);                        
+                //         printMsg(buffer);
+                //         setModemConfig(_mode);
+                //     }
+                //     break;
+                // }
 
                 default:
                     Serial.println(F("Unhandled: message"));
@@ -446,6 +446,7 @@ void MeshNet::sendModReq(uint8_t address, uint8_t mode, uint8_t power, uint8_t f
     a->mode = mode;
     a->power = power;
 	sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetModReq), address, flags);
+    setModemConfig(mode);
 }
 
 void MeshNet::sendModRsp(uint8_t address, uint8_t flags)
@@ -466,7 +467,7 @@ void MeshNet::handleModReq(MeshNetModReq *a, uint8_t flags, uint8_t from)
     }
     if (flags & modreq_mode)
     {
-        sendModRsp(from, flags);
+        // sendModRsp(from, flags);
         setModemConfig(a->mode);
         sprintf(buffer, "Set Mode: %d\n", a->mode);                        
         Serial.print(buffer);
