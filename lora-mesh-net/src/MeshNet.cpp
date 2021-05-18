@@ -120,6 +120,7 @@ void MeshNet::setModemConfig(uint8_t mode)
 {
     manager->setTimeout(timeout_ms[mode]);
     rf95.setModemConfig((RH_RF95::ModemConfigChoice) mode);
+    rf95.printRegisters();
 }
 
 void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t power, uint16_t cad_timeout, uint8_t mode)
