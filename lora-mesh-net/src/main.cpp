@@ -9,13 +9,12 @@
 #include <RHRouter.h>
 #include <RHMesh.h>
 #include <RH_RF95.h>
+#include <MeshNet.h>
+#include <NVStorage.h>
 #define FREQMHZ 434.4
 #define POWER 20
 #define MODE 0
 #define CAD_TIMEOUT 500
-
-#include <MeshNet.h>
-#include <NVStorage.h>
  
 #if defined(ARDUINO_ARCH_SAMD)
     #define Serial SerialUSB
@@ -231,6 +230,5 @@ void loop()
     recvWithEndMarker();
     handleData();
 
-    mesh.loop(20);
-
+    mesh.loop(200);
 }
