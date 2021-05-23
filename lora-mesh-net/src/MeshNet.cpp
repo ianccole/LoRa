@@ -160,7 +160,7 @@ void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t
 	rf95.setTxPower(power);
 	rf95.setFrequency(_freqMHz);
 	rf95.setCADTimeout(cad_timeout);
-    setModemConfig(mode);
+    // setModemConfig(mode);
 
 //   // long range configuration requires for on-air time
 //   boolean longRange = false;
