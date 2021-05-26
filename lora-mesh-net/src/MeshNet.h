@@ -273,5 +273,6 @@ private:
     uint8_t sendtoWaitStats(MeshNetApplicationMessage &msg, uint8_t len, uint8_t dest, uint8_t flags = 0);
     bool burnHexLine(const uint8_t *pLine);
     void handleFOTA(MeshNetFOTAMessageReq *msg, uint8_t from);
+    void correctFreqError(int ferror, int8_t ppm);
 };
 #endif

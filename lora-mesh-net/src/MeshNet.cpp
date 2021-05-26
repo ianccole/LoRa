@@ -381,10 +381,19 @@ void MeshNet::sendPingRsp(uint8_t address)
 
     int ferror = rf95.frequencyError();
     r->ppm = (ferror / _freqMHz);
-    // Serial.println(r->ppm);
 
     uint8_t flags = 0;
     sendtoWaitStats(_tmpMessage, sizeof(MeshNet::MeshNetPingRsp), address, flags);
+    correctFreqError(ferror,r->ppm);
+}
+
+void MeshNet::correctFreqError(int ferror, int8_t ppm)
+{
+    if (abs(ppm) > 4)
+    {
+        rf95.setFrequency(_freqMHz - ferror/1e6);
+        rf95.spiWrite(RH_RF95_REG_27_PPM_CORRECTION, (uint8_t)(0.95*ppm));
+    }
 }
 
 void MeshNet::sendFixReq(uint8_t address,uint8_t flags)
