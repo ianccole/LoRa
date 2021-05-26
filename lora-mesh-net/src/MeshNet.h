@@ -2,6 +2,12 @@
 #ifndef MeshNet_h
 #define MeshNet_h
 
+#if defined(ARDUINO_ARCH_SAMD)
+    #define Serial SerialUSB
+#else
+    #define DIO0 2
+#endif
+
 // Types of MeshNet message, used to set msgType in the MeshNetHeader
 #define MESH_NET_MESSAGE_TYPE_ROUTE_FAILURE                  0
 #define MESH_NET_MESSAGE_TYPE_PING_REQUEST                   0x50

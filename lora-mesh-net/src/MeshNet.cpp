@@ -35,6 +35,7 @@ PROGMEM static const uint16_t timeout_ms[] =
     100,    // Bw500Cr45Sf128
     1800,   // Bw31_25Cr48Sf512
     2000,   // Bw125Cr48Sf4096
+    2000,   // Bw125Cr48Sf2048
 
     9999
 };
@@ -120,7 +121,6 @@ void MeshNet::setModemConfig(uint8_t mode)
 {
     manager->setTimeout(timeout_ms[mode]);
     rf95.setModemConfig((RH_RF95::ModemConfigChoice) mode);
-    rf95.printRegisters();
 }
 
 void MeshNet::setup(uint8_t thisAddress, uint8_t nodeType, float freqMHz, int8_t power, uint16_t cad_timeout, uint8_t mode)
@@ -464,16 +464,16 @@ void MeshNet::handleModReq(MeshNetModReq *a, uint8_t flags, uint8_t from)
     Serial.println(F("handleModReq"));
     if (flags & modreq_power)
     {
-        setPower(a->power);
         sprintf(buffer, "Set power: %d\n", a->power);                        
         Serial.print(buffer);
+        setPower(a->power);
     }
     if (flags & modreq_mode)
     {
         // sendModRsp(from, flags);
-        setModemConfig(a->mode);
         sprintf(buffer, "Set Mode: %d\n", a->mode);                        
         Serial.print(buffer);
+        setModemConfig(a->mode);
     }
 }
 

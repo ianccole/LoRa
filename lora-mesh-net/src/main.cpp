@@ -6,7 +6,7 @@
  */
 
 #include <Arduino.h>
-#include <RHRouter.h>
+
 #include <RHMesh.h>
 #include <RH_RF95.h>
 #include <MeshNet.h>
@@ -16,12 +16,6 @@
 #define MODE 0
 #define CAD_TIMEOUT 500
  
-#if defined(ARDUINO_ARCH_SAMD)
-    #define Serial SerialUSB
-#else
-    #define DIO0 2
-#endif
-
 static RH_RF95 rf95(SS,DIO0);
 
 struct nodeInfo
