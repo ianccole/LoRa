@@ -94,9 +94,14 @@ void handleData() {
         {
             s = strtok(NULL, " ");
             uint8_t nodeId = atoi(s);
+
+            s = strtok(NULL, " ");
+            uint8_t interval = atoi(s);
+            Serial.println(interval, DEC);
+
             sprintf(buffer, "Ping Node id: %d\n", nodeId);
             Serial.print(buffer);
-            mesh.addNode(nodeId, MeshNet::meshModeType::mode_ping);
+            mesh.addNode(nodeId, MeshNet::meshModeType::mode_ping, interval);
             break;
         }
 
@@ -142,7 +147,6 @@ void handleData() {
 
         case 'L':
         {
-
             s = strtok(NULL, " ");
             uint8_t mode = atoi(s);
             mesh.setModemConfig(mode);

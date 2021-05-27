@@ -36,7 +36,7 @@ PROGMEM static const uint16_t timeout_ms[] =
     1800,   // Bw31_25Cr48Sf512
     2000,   // Bw125Cr48Sf4096
     2000,   // Bw125Cr48Sf2048
-
+    1500,   // Bw125Cr48Sf1024
     9999
 };
 
@@ -505,6 +505,16 @@ uint8_t MeshNet::sendtoWaitStats(MeshNetApplicationMessage &msg, uint8_t len, ui
             printMsg(buffer);
         }
         break;
+
+        case RH_ROUTER_ERROR_UNABLE_TO_DELIVER:
+        {
+            Serial.println(F("unable to deliver"));
+        }
+        break;
+
+        default:
+            Serial.println(error);
+
     }
 
     return error;

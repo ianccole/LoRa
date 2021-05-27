@@ -222,7 +222,7 @@ public:
         rf95.setTxPower(power);
     };
 
-    void addNode(uint8_t node, meshModeType mode)
+    void addNode(uint8_t node, meshModeType mode, uint8_t interval=10)
     {
         _modeType = (meshModeType)mode;
 
@@ -233,6 +233,7 @@ public:
         }
         else
         {
+            pingInterval = interval;
             if(nodeIdx < sizeof(nodes)-1)
             {
                 nodes[nodeIdx++] = node;
@@ -247,7 +248,7 @@ private:
     static MeshNetApplicationMessage _tmpMessage;
     static char buffer[80];
 
-    const uint8_t pingInterval = 10;
+    uint8_t pingInterval = 30;
     const uint8_t fotaInterval = 15;
     uint8_t pingTimeout;
     uint8_t fotaTimeout;
