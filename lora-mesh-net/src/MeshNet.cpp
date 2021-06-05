@@ -29,7 +29,7 @@ MeshNet::MeshNetApplicationMessage MeshNet::_tmpMessage;
 char MeshNet::buffer[80];
 
 // timeouts for payload of 20 for each mode
-PROGMEM static const uint16_t timeout_ms[] =
+static const uint16_t timeout_ms[] =
 {
     200,    // Bw125Cr45Sf128
     100,    // Bw500Cr45Sf128
@@ -490,7 +490,11 @@ uint8_t MeshNet::sendtoWaitStats(MeshNetApplicationMessage &msg, uint8_t len, ui
 {
 	blinkLed();
 
+    // Serial.print(F("Start:"));
+    // Serial.println(millis());
 	uint8_t error = manager->sendtoWait((uint8_t*)&msg, len, address, flags);
+    // Serial.print(F("End:"));
+    // Serial.println(millis());
 
     switch(error)
     {
